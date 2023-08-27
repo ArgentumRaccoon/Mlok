@@ -9,7 +9,7 @@ int main()
     AppConfig.StartPosY = 50;
     AppConfig.StartWidth = 1280;
     AppConfig.StartHeight = 720;
-    AppConfig.Name = "Mlok Engine";
+    AppConfig.Name = (char*)"Mlok Engine";
 
     if (!App.Create(AppConfig))
     {
