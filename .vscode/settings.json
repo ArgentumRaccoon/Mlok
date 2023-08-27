@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "xtr1common": "cpp",
+        "xlocale": "cpp"
+    },
+    "workbench.editor.enablePreviewFromCodeNavigation": false
+}
