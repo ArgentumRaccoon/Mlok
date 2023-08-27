@@ -1,1 +1,1 @@
-Mlok is a simple 3D engine based on Travis Vroman's Kohi Vulkan engine series (https://youtube.com/playlist?list=PLv8Ddw9K0JPg1BEO-RS-0MYs423cvLVtj&si=z6T_65i46baU0yyW). Rewritten with Cpp instead of pure C. Also some personal reworks and updates are supposed to be done.
+Mlok is a simple 3D engine based on Travis Vroman's [Kohi Vulkan engine series](https://youtube.com/playlist?list=PLv8Ddw9K0JPg1BEO-RS-0MYs423cvLVtj&si=z6T_65i46baU0yyW). Rewritten with Cpp instead of pure C. Also some personal reworks and updates are supposed to be done.
