@@ -7,7 +7,7 @@ EXTENSION := .dll
 COMPILER_FLAGS := -g -Werror=vla -Wno-missing-braces -fdeclspec #-fPIC
 INCLUDE_FLAGS := -Iengine\source -I$(VULKAN_SDK)\include
 LINKER_FLAGS := -g -shared -luser32 -lvulkan-1 -L$(VULKAN_SDK)\Lib -L$(OBJ_DIR)\engine
-DEFINES := -D_DEBUG -DMEXPORT -D_CRT_SECURE_NO_WARNINGS
+DEFINES := -DMEXPORT -D_CRT_SECURE_NO_WARNINGS
 
 # Make does not offer a recursive wildcard function, so here's one:
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
@@ -28,7 +28,7 @@ scaffold: # create build directory
 .PHONY: link
 link: scaffold $(OBJ_FILES) # link
 	@echo Linking $(ASSEMBLY)...
-	@clang $(OBJ_FILES) -o $(BUILD_DIR)\$(ASSEMBLY)$(EXTENSION) $(LINKER_FLAGS)
+	@clang++ $(OBJ_FILES) -o $(BUILD_DIR)\$(ASSEMBLY)$(EXTENSION) $(LINKER_FLAGS)
 
 .PHONY: compile
 compile: #compile .cpp files
@@ -41,6 +41,6 @@ clean: # clean build directory
 
 $(OBJ_DIR)/%.cpp.o: %.cpp # compile .cpp to .cpp.o object
 	@echo   $<
-	@clang $< $(COMPILER_FLAGS) -c -o $@ $(DEFINES) $(INCLUDE_FLAGS)
+	@clang++ $< $(COMPILER_FLAGS) -c -o $@ $(DEFINES) $(INCLUDE_FLAGS)
 
 -include $(OBJ_FILES:.o=.d)

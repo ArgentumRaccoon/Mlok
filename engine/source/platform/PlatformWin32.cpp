@@ -2,7 +2,13 @@
 
 #ifdef MPLATFORM_WINDOWS
 
-bool PlatformWin32::Startup(const char* ApplicationName,
+Platform* Platform::Get()
+{
+    static PlatformWin32 PlatformHandle;
+    return &PlatformHandle;
+}
+
+bool PlatformWin32::Startup(const std::string& ApplicationName,
                             int32_t X, int32_t Y, 
                             int32_t Width, int32_t Height)
 {
@@ -50,7 +56,7 @@ bool PlatformWin32::Startup(const char* ApplicationName,
     WindowWidth += BorderRect.right - BorderRect.left;
     WindowHeight += BorderRect.bottom - BorderRect.top;
 
-    hWnd = CreateWindowExA(WindowExStyle, WindowClass, ApplicationName,
+    hWnd = CreateWindowExA(WindowExStyle, WindowClass, ApplicationName.c_str(),
                            WindowStyle, WindowX, WindowY, WindowWidth, WindowHeight,
                            0, 0, hInstance, 0);
 

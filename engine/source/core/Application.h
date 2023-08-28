@@ -2,13 +2,15 @@
 
 #include "Defines.h"
 
+#include <string>
+
 typedef struct ApplicationConfig
 {
     int16_t StartPosX;
     int16_t StartPosY;
     int16_t StartWidth;
     int16_t StartHeight;
-    char* Name;
+    std::string Name;
 } ApplicationConfig;
 
 class MAPI Application
@@ -18,10 +20,13 @@ class MAPI Application
         bool Run();
 
     private:
-        bool bIsRunning;
-        bool bIsSuspended;
-        int16_t Width;
-        int16_t Height;
+        struct AppState
+        {
+            bool bIsRunning;
+            bool bIsSuspended;
+            int16_t Width;
+            int16_t Height;
+        } State;
 
         void GetFramebufferSize(uint32_t* OutWidth, uint32_t* OutHeight) const;
 };

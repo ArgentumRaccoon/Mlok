@@ -12,8 +12,7 @@
                 "_UNICODE",
                 "MEXPORT"
             ],
-            "compilerPath": "/usr/bin/clang",
-            "cStandard": "c17",
+            "compilerPath": "/usr/bin/clang++",
             "cppStandard": "c++17",
             "intelliSenseMode": "clang-x64"
         },
@@ -30,8 +29,7 @@
                 "MEXPORT"
             ],
             "windowsSdkVersion": "10.0.19041.0",
-            "compilerPath": "C:\\Program Files\\LLVM\\bin\\clang.exe",
-            "cStandard": "c17",
+            "compilerPath": "C:\\Program Files\\LLVM\\bin\\clang++.exe",
             "cppStandard": "c++17",
             "intelliSenseMode": "clang-x64"
         }

@@ -1,21 +1,14 @@
 #include "Application.h"
-#include "platform/Platform.h"
 
-// TODO: move all platform dependency to platform state object, make platform-agnostic
-#ifdef MPLATFORM_WINDOWS
-    PlatformWin32 Platform;
-#else
-#ifdef MPLATFORM_LINUX
-    PlatformLinux Platform;
-#endif // MPLATFORM_LINUX
-#endif // MPLATFORM_WINDOWS
+#include "platform/Platform.h"
+#include "core/Logger.h"
 
 bool Application::Create(const ApplicationConfig& Config)
 {
-    bIsRunning = false;
-    bIsSuspended = false;
+    State.bIsRunning = false;
+    State.bIsSuspended = false;
 
-    if (!Platform.Startup(Config.Name, Config.StartPosX, Config.StartPosY, Config.StartWidth, Config.StartHeight))
+    if (!Platform::Get()->Startup(Config.Name, Config.StartPosX, Config.StartPosY, Config.StartWidth, Config.StartHeight))
     {
         return false;
     }
@@ -25,19 +18,27 @@ bool Application::Create(const ApplicationConfig& Config)
 
 bool Application::Run()
 {
-    bIsRunning = true;
+    State.bIsRunning = true;
 
-    while (bIsRunning)
+    // TODO: remove after adding unit tests
+    Logger::Get()->MFatal("test fatal {}!", 3.14);
+    Logger::Get()->MError("test error {}!", 3.14);
+    Logger::Get()->MWarning("test warning {}!", 3.14);
+    Logger::Get()->MInfo("test info {}!", 3.14);
+    Logger::Get()->MDebug("test debug {}!", 3.14);
+    Logger::Get()->MVerbose("test verbose {}!", 3.14);
+
+    while (State.bIsRunning)
     {
-        if (!bIsSuspended)
+        if (!State.bIsSuspended)
         {
             // TODO: update everything
         }
     }
     
-    bIsRunning = false;
+    State.bIsRunning = false;
 
-    Platform.Shutdown();
+    Platform::Get()->Shutdown();
 
     return true;
 }

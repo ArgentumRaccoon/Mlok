@@ -6,7 +6,7 @@ EXTENSION := .so
 COMPILER_FLAGS := -g -Werror=vla -Wno-missing-braces -fdeclspec -fPIC
 INCLUDE_FLAGS := -Iengine/source -I$(VULKAN_SDK)/include
 LINKER_FLAGS := -g -shared -lvulkan -lxcb -lX11 -lX11-xcb -lxkbcommon -L$(VULKAN_SDK)/lib -L/usr/X11R6/lib
-DEFINES := -D_DEBUG -DMEXPORT
+DEFINES := -DMEXPORT
 
 # Make does not offer a recursive wildcard function, so here's one:
 #rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))

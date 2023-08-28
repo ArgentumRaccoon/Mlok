@@ -2,6 +2,8 @@
 
 #include "Defines.h"
 
+#include <string>
+
 #ifdef MPLATFORM_LINUX
     #include <xcb/xcb.h>
     #include <X11/keysym.h>
@@ -11,10 +13,12 @@
     #include <sys/time.h>
 #endif
 
-class PlatformBase
+class Platform
 {
     public:
-        virtual bool Startup(const char* ApplicationName,
+        static Platform* Get();
+
+        virtual bool Startup(const std::string& ApplicationName,
                              int32_t X, int32_t Y, 
                              int32_t Width, int32_t Height) = 0;
 
@@ -25,10 +29,10 @@ class PlatformBase
     #include <windows.h>
     #include <windowsx.h>
 
-class PlatformWin32 : public PlatformBase
+class PlatformWin32 : public Platform
 {
     public:
-        virtual bool Startup(const char* ApplicationName,
+        virtual bool Startup(const std::string& ApplicationName,
                              int32_t X, int32_t Y, 
                              int32_t Width, int32_t Height) override;
 
@@ -51,10 +55,10 @@ class PlatformWin32 : public PlatformBase
     #include <X11/Xlib-xcb.h>
     #include <sys/time.h>
 
-class PlatformLinux : public PlatformBase
+class PlatformLinux : public Platform
 {
     public:
-        virtual bool Startup(const char* ApplicationName,
+        virtual bool Startup(const std::string& ApplicationName,
                              int32_t X, int32_t Y, 
                              int32_t Width, int32_t Height) override;
 

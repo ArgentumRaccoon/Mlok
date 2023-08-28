@@ -2,7 +2,13 @@
 
 #ifdef MPLATFORM_LINUX
 
-bool PlatformLinux::Startup(const char* ApplicationName,
+Platform* Platform::Get()
+{
+    static PlatformLinux PlatformHandle;
+    return &PlatformHandle;
+}
+
+bool PlatformLinux::Startup(const std::string& ApplicationName,
                             int32_t X, int32_t Y, 
                             int32_t Width, int32_t Height)
 {
@@ -57,8 +63,8 @@ bool PlatformLinux::Startup(const char* ApplicationName,
                         XCB_ATOM_WM_NAME,
                         XCB_ATOM_STRING,
                         8,
-                        strlen(ApplicationName),
-                        ApplicationName);
+                        ApplicationName.length(),
+                        ApplicationName.c_str());
 
     xcb_intern_atom_cookie_t wmDeleteCookie = xcb_intern_atom(pConnection,
                                                               0,
