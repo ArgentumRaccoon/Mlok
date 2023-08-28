@@ -32,6 +32,11 @@ bool Application::Run()
     {
         if (!State.bIsSuspended)
         {
+            if (!Platform::Get()->PumpMessages())
+            {
+                State.bIsRunning = false;
+            }
+            
             // TODO: update everything
         }
     }
