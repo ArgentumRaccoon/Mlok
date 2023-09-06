@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
 
 // Properly define static assertions.
 #if defined(__clang__) || defined(__gcc__)

@@ -71,3 +71,31 @@ class MAPI Logger
 std::ostream& operator<<(std::ostream& os, const LogLevel& Level);
 
 #include "Logger.tcc"
+
+
+#define MlokFatal(Message, ...) (Logger::Get()->MFatal(Message, ##__VA_ARGS__))
+#define MlokError(Message, ...) (Logger::Get()->MFatal(Message, ##__VA_ARGS__))
+
+#ifdef LOG_WARNING_ENABLED
+    #define MlokWarning(Message, ...) (Logger::Get()->MWarning(Message, ##__VA_ARGS__))
+#else
+    #define MlokWarning(Message, ...)
+#endif //LOG_WARNING_ENABLED
+
+#ifdef LOG_INFO_ENABLED
+    #define MlokInfo(Message, ...) (Logger::Get()->MInfo(Message, ##__VA_ARGS__))
+#else
+    #define MlokInfo(Message, ...)
+#endif //LOG_INFO_ENABLED
+
+#ifdef LOG_DEBUG_ENABLED
+    #define MlokDebug(Message, ...) (Logger::Get()->MDebug(Message, ##__VA_ARGS__))
+#else
+    #define MlokDebug(Message, ...)
+#endif //LOG_DEBUG_ENABLED
+
+#ifdef LOG_VERBOSE_ENABLED
+    #define MlokVerbose(Message, ...) (Logger::Get()->MVerbose(Message, ##__VA_ARGS__))
+#else
+    #define MlokVerbose(Message, ...)
+#endif //LOG_VERBOSE_ENABLED
