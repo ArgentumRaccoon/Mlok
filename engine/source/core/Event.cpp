@@ -1,17 +1,6 @@
 #include "Event.h"
 #include "Logger.h"
 
-typedef struct RegisteredEvent
-{
-    void* Listener;
-    PFN_OnEvent Callback;
-} RegisteredEvent;
-
-typedef struct EventCodeEntry
-{
-    std::vector<RegisteredEvent> Events; // TODO: replace with custom light-weight container
-} EventCodeEntry;
-
 void EventSystem::Initialize()
 {
 

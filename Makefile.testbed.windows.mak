@@ -4,7 +4,7 @@ OBJ_DIR := obj
 
 ASSEMBLY := testbed
 EXTENSION := .exe
-COMPILER_FLAGS := -g -Werror=vla -Wno-missing-braces -fdeclspec #-fPIC
+COMPILER_FLAGS := -g -Werror=vla -Wno-missing-braces -fdeclspec --std=c++17 #-fPIC
 INCLUDE_FLAGS := -Iengine\source -Itestbed\source 
 LINKER_FLAGS := -g -lengine.lib -L$(OBJ_DIR)\engine -L$(BUILD_DIR) #-Wl,-rpath,.
 DEFINES := -DMIMPORT

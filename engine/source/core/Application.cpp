@@ -21,12 +21,12 @@ bool Application::Run()
     State.bIsRunning = true;
 
     // TODO: remove after adding unit tests
-    Logger::Get()->MFatal("test fatal {}!", 3.14);
-    Logger::Get()->MError("test error {}!", 3.14);
-    Logger::Get()->MWarning("test warning {}!", 3.14);
-    Logger::Get()->MInfo("test info {}!", 3.14);
-    Logger::Get()->MDebug("test debug {}!", 3.14);
-    Logger::Get()->MVerbose("test verbose {}!", 3.14);
+    MlokFatal("test fatal {}!", 3.14);
+    MlokError("test error {}!", 3.14);
+    MlokWarning("test warning {}!", 3.14);
+    MlokInfo("test info {}!", 3.14);
+    MlokDebug("test debug {}!", 3.14);
+    MlokVerbose("test verbose {}!", 3.14);
 
     while (State.bIsRunning)
     {

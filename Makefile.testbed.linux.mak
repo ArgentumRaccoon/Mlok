@@ -3,7 +3,7 @@ OBJ_DIR := obj
 
 ASSEMBLY := testbed
 EXTENSION := 
-COMPILER_FLAGS := -g -Werror=vla -Wno-missing-braces -fdeclspec -fPIC
+COMPILER_FLAGS := -g -Werror=vla -Wno-missing-braces -fdeclspec -fPIC --std=c++17
 INCLUDE_FLAGS := -Iengine/source -I$(VULKAN_SDK)\include
 LINKER_FLAGS := -L./$(BUILD_DIR)/ -lengine -Wl,-rpath,.
 DEFINES := -DMIMPORT

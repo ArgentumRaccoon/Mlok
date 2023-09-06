@@ -15,8 +15,18 @@ typedef struct EventContext
                  char>                      Data;
 } EventContext;
 
-struct RegisteredEvent;
-struct EventCodeEntry;
+typedef bool (*PFN_OnEvent)(uint16_t Code, void* Sender, void* ListenerInst, EventContext Data);
+
+typedef struct RegisteredEvent
+{
+    void* Listener;
+    PFN_OnEvent Callback;
+} RegisteredEvent;
+
+typedef struct EventCodeEntry
+{
+    std::vector<RegisteredEvent> Events; // TODO: replace with custom light-weight container
+} EventCodeEntry;
 
 enum class SystemEventCode
 {
@@ -69,8 +79,6 @@ enum class SystemEventCode
 
     MAX_EVENT_CODE = 0xFF
 };
-
-typedef bool (*PFN_OnEvent)(uint16_t Code, void* Sender, void* ListenerInst, EventContext Data);
 
 class MAPI EventSystem
 {
