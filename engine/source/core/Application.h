@@ -17,7 +17,9 @@ class MAPI Application
 {
     public:
         bool Create(const ApplicationConfig& Config); // TODO: move config to game object
+
         bool Run();
+        void Stop();
 
     private:
         struct AppState

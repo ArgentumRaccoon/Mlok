@@ -2,14 +2,28 @@
 
 #include "platform/Platform.h"
 #include "core/Logger.h"
+#include "core/Event.h"
+
+bool ApplicationOnEvent(uint16_t Code, void* Sender, void* ListenerInst, EventContext Context);
 
 bool Application::Create(const ApplicationConfig& Config)
 {
     State.bIsRunning = false;
     State.bIsSuspended = false;
 
+    EventSystem::Get()->Initialize();
+
+    EventSystem::Get()->RegisterEvent(static_cast<uint16_t>(SystemEventCode::EVENT_CODE_APPLICATION_QUIT), this, ApplicationOnEvent);
+
+    if (!Logger::Get()->Initialize())
+    {
+        MlokError("Failed to initialize Logger! Shutting down...");
+        return false;
+    }
+
     if (!Platform::Get()->Startup(Config.Name, Config.StartPosX, Config.StartPosY, Config.StartWidth, Config.StartHeight))
     {
+        MlokError("Failed to initialize Platform! Shutting down...");
         return false;
     }
 
@@ -45,5 +59,29 @@ bool Application::Run()
 
     Platform::Get()->Shutdown();
 
+    Logger::Get()->Shutdown();
+
+    EventSystem::Get()->UnregisterEvent(static_cast<uint16_t>(SystemEventCode::EVENT_CODE_APPLICATION_QUIT), this, ApplicationOnEvent);
+
+    EventSystem::Get()->Shutdown();
+
     return true;
+}
+
+void Application::Stop()
+{
+    State.bIsRunning = false;
+}
+
+bool ApplicationOnEvent(uint16_t Code, void* Sender, void* ListenerInst, EventContext Context)
+{
+    switch (Code)
+    {
+        case static_cast<uint16_t>(SystemEventCode::EVENT_CODE_APPLICATION_QUIT):
+            MlokInfo("EVENT_CODE_APPLICATION_QUIT received, shutting down the Application...");
+            static_cast<Application*>(ListenerInst)->Stop();
+            return true;
+    }
+
+    return false;
 }

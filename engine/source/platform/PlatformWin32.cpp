@@ -2,6 +2,9 @@
 
 #ifdef MPLATFORM_WINDOWS
 
+#include "core/Logger.h"
+#include "core/Event.h"
+
 #include <cstdlib>
 
 Platform* Platform::Get()
@@ -163,7 +166,40 @@ void PlatformWin32::PlatformSleep(uint64_t ms)
 
 LRESULT PlatformWin32::Win32ProcessMessage(HWND hWnd, uint32_t Message, WPARAM wParam, LPARAM lParam)
 {
-    // TODO: add different events processing
+    switch(Message)
+    {
+        case WM_ERASEBKGND:
+            return 1;
+        case WM_CLOSE:
+            {
+                EventContext Data {};
+                EventSystem::Get()->FireEvent(static_cast<uint16_t>(SystemEventCode::EVENT_CODE_APPLICATION_QUIT), nullptr, Data);
+                return true;
+            }
+        case WM_DESTROY:
+            PostQuitMessage(0);
+            return 0;
+        case WM_SIZE:
+            break;
+        case WM_KEYDOWN:
+        case WM_SYSKEYDOWN:
+        case WM_KEYUP:
+        case WM_SYSKEYUP:
+            break;
+        case WM_MOUSEMOVE:
+            break;
+        case WM_MOUSEWHEEL:
+            break;
+        case WM_LBUTTONDOWN:
+        case WM_MBUTTONDOWN:
+        case WM_RBUTTONDOWN:
+        case WM_LBUTTONUP:
+        case WM_MBUTTONUP:
+        case WM_RBUTTONUP:
+            break;
+        default:
+            break;
+    }
 
     return DefWindowProcA(hWnd, Message, wParam, lParam);
 }
