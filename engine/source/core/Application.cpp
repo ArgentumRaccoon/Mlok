@@ -1,8 +1,9 @@
 #include "Application.h"
 
 #include "platform/Platform.h"
-#include "core/Logger.h"
 #include "core/Event.h"
+#include "core/Logger.h"
+#include "core/Input.h"
 
 bool ApplicationOnEvent(uint16_t Code, void* Sender, void* ListenerInst, EventContext Context);
 
@@ -20,6 +21,8 @@ bool Application::Create(const ApplicationConfig& Config)
         MlokError("Failed to initialize Logger! Shutting down...");
         return false;
     }
+
+    InputSystem::Get()->Initialize();
 
     if (!Platform::Get()->Startup(Config.Name, Config.StartPosX, Config.StartPosY, Config.StartWidth, Config.StartHeight))
     {
@@ -58,6 +61,8 @@ bool Application::Run()
     State.bIsRunning = false;
 
     Platform::Get()->Shutdown();
+
+    InputSystem::Get()->Shutdown();
 
     Logger::Get()->Shutdown();
 
