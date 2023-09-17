@@ -13,7 +13,7 @@ bool Application::Create(const ApplicationConfig& Config)
 
     EventSystem::Get()->Initialize();
 
-    EventSystem::Get()->RegisterEvent(static_cast<uint16_t>(SystemEventCode::EVENT_CODE_APPLICATION_QUIT), this, ApplicationOnEvent);
+    EventSystem::Get()->RegisterEvent(EVENT_CODE_APPLICATION_QUIT, this, ApplicationOnEvent);
 
     if (!Logger::Get()->Initialize())
     {
@@ -61,7 +61,7 @@ bool Application::Run()
 
     Logger::Get()->Shutdown();
 
-    EventSystem::Get()->UnregisterEvent(static_cast<uint16_t>(SystemEventCode::EVENT_CODE_APPLICATION_QUIT), this, ApplicationOnEvent);
+    EventSystem::Get()->UnregisterEvent(EVENT_CODE_APPLICATION_QUIT, this, ApplicationOnEvent);
 
     EventSystem::Get()->Shutdown();
 
@@ -77,7 +77,7 @@ bool ApplicationOnEvent(uint16_t Code, void* Sender, void* ListenerInst, EventCo
 {
     switch (Code)
     {
-        case static_cast<uint16_t>(SystemEventCode::EVENT_CODE_APPLICATION_QUIT):
+        case EVENT_CODE_APPLICATION_QUIT:
             MlokInfo("EVENT_CODE_APPLICATION_QUIT received, shutting down the Application...");
             static_cast<Application*>(ListenerInst)->Stop();
             return true;

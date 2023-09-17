@@ -28,7 +28,7 @@ typedef struct EventCodeEntry
     std::vector<RegisteredEvent> Events; // TODO: replace with custom light-weight container
 } EventCodeEntry;
 
-enum class SystemEventCode
+typedef enum SystemEventCode
 {
     // Shuts the application down on the next frame.
     EVENT_CODE_APPLICATION_QUIT = 0x01,
@@ -78,7 +78,7 @@ enum class SystemEventCode
     EVENT_CODE_RESIZED = 0x08,
 
     MAX_EVENT_CODE = 0xFF
-};
+} SystemEventCode;
 
 class MAPI EventSystem
 {
