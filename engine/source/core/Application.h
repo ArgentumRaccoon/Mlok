@@ -2,7 +2,10 @@
 
 #include "Defines.h"
 
+#include "MlokClock.h"
+
 #include <string>
+#include <memory>
 
 typedef struct ApplicationConfig
 {
@@ -28,7 +31,10 @@ class MAPI Application
             bool bIsSuspended;
             int16_t Width;
             int16_t Height;
+            double LastTime;
         } State;
 
         void GetFramebufferSize(uint32_t* OutWidth, uint32_t* OutHeight) const;
+
+        std::unique_ptr<MlokClock> AppClock;
 };

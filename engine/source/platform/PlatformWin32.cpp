@@ -4,6 +4,7 @@
 
 #include "core/Logger.h"
 #include "core/Event.h"
+#include "core/Input.h"
 
 #include <cstdlib>
 
@@ -185,10 +186,48 @@ LRESULT PlatformWin32::Win32ProcessMessage(HWND hWnd, uint32_t Message, WPARAM w
         case WM_SYSKEYDOWN:
         case WM_KEYUP:
         case WM_SYSKEYUP:
+            {
+                bool bPressed = (Message == WM_KEYDOWN || Message == WM_SYSKEYDOWN);
+                KeyboardKey Key = (KeyboardKey)wParam;
+
+                bool bExtended = (HIWORD(lParam) & KF_EXTENDED) == KF_EXTENDED;
+
+                if (wParam == VK_MENU) // Alt Key
+                {
+                    Key = bExtended ? KEY_RALT : KEY_LALT;
+                } 
+                else if (wParam == VK_SHIFT) // Shift Key
+                {
+                    uint32_t LeftShift = MapVirtualKey(VK_LSHIFT, MAPVK_VK_TO_VSC);
+                    uint32_t ScanCode = ((lParam & (0xFF << 16)) >> 16);
+                    Key = ScanCode == LeftShift ? KEY_LSHIFT : KEY_RSHIFT;
+                }
+                else if (wParam == VK_CONTROL) // Ctrl Key
+                {
+                    Key = bExtended ? KEY_RCONTROL : KEY_LCONTROL;
+                }
+
+                InputSystem::Get()->ProcessKey(Key, bPressed);
+            }
             break;
         case WM_MOUSEMOVE:
+            {
+                int32_t XPos = GET_X_LPARAM(lParam);
+                int32_t YPos = GET_Y_LPARAM(lParam);
+                
+                InputSystem::Get()->ProcessMouseMove(XPos, YPos);
+            }
             break;
         case WM_MOUSEWHEEL:
+            {
+                int32_t WheelDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+                if (WheelDelta != 0)
+                {
+                    WheelDelta = (WheelDelta < 0) ? -1 : 1;
+                    
+                    InputSystem::Get()->ProcessMouseWheel(WheelDelta);
+                }
+            }
             break;
         case WM_LBUTTONDOWN:
         case WM_MBUTTONDOWN:
@@ -196,6 +235,30 @@ LRESULT PlatformWin32::Win32ProcessMessage(HWND hWnd, uint32_t Message, WPARAM w
         case WM_LBUTTONUP:
         case WM_MBUTTONUP:
         case WM_RBUTTONUP:
+            {
+                bool bPressed = (Message == WM_LBUTTONDOWN || Message == WM_MBUTTONDOWN || Message == WM_RBUTTONDOWN);
+                
+                MouseButton Button = MouseButton::MOUSE_BUTTON_MAX;
+                switch (Message)
+                {
+                case WM_LBUTTONDOWN:
+                case WM_LBUTTONUP:
+                    Button = MouseButton::MOUSE_BUTTON_LEFT;
+                    break;
+                case WM_RBUTTONDOWN:
+                case WM_RBUTTONUP:
+                    Button = MouseButton::MOUSE_BUTTON_RIGHT;
+                    break;
+                case WM_MBUTTONDOWN:
+                case WM_MBUTTONUP:
+                    Button = MouseButton::MOUSE_BUTTON_MIDDLE;
+                    break;        
+                default:
+                    break;
+                }
+
+                InputSystem::Get()->ProcessMouseButton(Button, bPressed);
+            }
             break;
         default:
             break;

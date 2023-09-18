@@ -6,15 +6,20 @@
 #include "core/Input.h"
 
 bool ApplicationOnEvent(uint16_t Code, void* Sender, void* ListenerInst, EventContext Context);
+bool ApplicationOnKey(uint16_t Code, void* Sender, void* ListenerInst, EventContext Context);
 
 bool Application::Create(const ApplicationConfig& Config)
 {
     State.bIsRunning = false;
     State.bIsSuspended = false;
 
+    AppClock = std::make_unique<MlokClock>();
+
     EventSystem::Get()->Initialize();
 
     EventSystem::Get()->RegisterEvent(EVENT_CODE_APPLICATION_QUIT, this, ApplicationOnEvent);
+    EventSystem::Get()->RegisterEvent(EVENT_CODE_KEY_PRESSED, this, ApplicationOnKey);
+    EventSystem::Get()->RegisterEvent(EVENT_CODE_KEY_RELEASED, this, ApplicationOnKey);
 
     if (!Logger::Get()->Initialize())
     {
@@ -45,6 +50,12 @@ bool Application::Run()
     MlokDebug("test debug {}!", 3.14);
     MlokVerbose("test verbose {}!", 3.14);
 
+    AppClock->Start();
+    AppClock->Update();
+    State.LastTime = AppClock->GetElapsed();
+
+    double TargetFrameSeconds = 1.f / 60; // TODO: move to config
+
     while (State.bIsRunning)
     {
         if (!State.bIsSuspended)
@@ -54,7 +65,32 @@ bool Application::Run()
                 State.bIsRunning = false;
             }
             
+            AppClock->Update();
+            double CurrentTime = AppClock->GetElapsed();
+            double DeltaTime = CurrentTime - State.LastTime;
+            double FrameStartTime = Platform::Get()->GetAbsoluteTime();
+
             // TODO: update everything
+
+
+            double FrameEndTime = Platform::Get()->GetAbsoluteTime();
+            double FrameElapsedTime = FrameEndTime - FrameStartTime;
+            double RemainingSeconds = TargetFrameSeconds - FrameElapsedTime;
+
+            if (RemainingSeconds > 0.f)
+            {
+                uint64_t RemainingMs = RemainingSeconds * 1000;
+
+                bool bLimitFrames = false; // TODO: move to config
+                if (bLimitFrames && RemainingMs > 0.f)
+                {
+                    Platform::Get()->PlatformSleep(RemainingMs - 1);
+                }
+            }
+
+            InputSystem::Get()->Update(DeltaTime);
+
+            State.LastTime = CurrentTime;
         }
     }
     
@@ -88,5 +124,22 @@ bool ApplicationOnEvent(uint16_t Code, void* Sender, void* ListenerInst, EventCo
             return true;
     }
 
+    return false;
+}
+
+bool ApplicationOnKey(uint16_t Code, void* Sender, void* ListenerInst, EventContext Context)
+{
+    if (Code == EVENT_CODE_KEY_PRESSED)
+    {
+        uint16_t KeyCode = Context.Data.u16[0];
+        if (KeyCode == KEY_ESCAPE)
+        {
+            EventContext Data {};
+            EventSystem::Get()->FireEvent(EVENT_CODE_APPLICATION_QUIT, nullptr, Data);
+
+            return true;
+        }
+    }
+    
     return false;
 }
