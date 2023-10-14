@@ -67,6 +67,7 @@ class MlokLinearAllocator : public MlokAllocator
         MlokLinearAllocator(void* const inStart, const size_t inSize) noexcept;
         MlokLinearAllocator(const MlokLinearAllocator& inAllocator) = delete;
         MlokLinearAllocator(MlokLinearAllocator&& inAllocator) noexcept;
+        ~MlokLinearAllocator();
 
         MlokLinearAllocator& operator=(MlokLinearAllocator& inAllocator) = delete;
         MlokLinearAllocator& operator=(MlokLinearAllocator&& inAllocator) noexcept;
@@ -76,8 +77,8 @@ class MlokLinearAllocator : public MlokAllocator
 
         void* GetCurrent() const noexcept { return pCurrent; }
 
-        virtual void Rewind(void* const Mark) noexcept = 0;
-        virtual void Clear() noexcept = 0;
+        virtual void Rewind(void* const pMark) noexcept;
+        virtual void Clear() noexcept;
 
     protected:
         void* pCurrent;
