@@ -2,6 +2,8 @@
 
 #include <cstdint>
 #include <vector>
+#include <string>
+#include <memory>
 
 // Properly define static assertions.
 #if defined(__clang__) || defined(__gcc__)

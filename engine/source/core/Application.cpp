@@ -5,6 +5,8 @@
 #include "core/Logger.h"
 #include "core/Input.h"
 
+#include "renderer/RendererFrontend.h"
+
 bool ApplicationOnEvent(uint16_t Code, void* Sender, void* ListenerInst, EventContext Context);
 bool ApplicationOnKey(uint16_t Code, void* Sender, void* ListenerInst, EventContext Context);
 
@@ -32,6 +34,12 @@ bool Application::Create(const ApplicationConfig& Config)
     if (!Platform::Get()->Startup(Config.Name, Config.StartPosX, Config.StartPosY, Config.StartWidth, Config.StartHeight))
     {
         MlokError("Failed to initialize Platform! Shutting down...");
+        return false;
+    }
+
+    if (!Renderer::Get()->Initialize(Config.Name))
+    {
+        Logger::Get()->MFatal("Failed to initialize Renderer. Shutting down...");
         return false;
     }
 
@@ -70,8 +78,9 @@ bool Application::Run()
             double DeltaTime = CurrentTime - State.LastTime;
             double FrameStartTime = Platform::Get()->GetAbsoluteTime();
 
-            // TODO: update everything
-
+            RenderPacket Packet;
+            Packet.DeltaTime = DeltaTime;
+            Renderer::Get()->DrawFrame(&Packet);
 
             double FrameEndTime = Platform::Get()->GetAbsoluteTime();
             double FrameElapsedTime = FrameEndTime - FrameStartTime;
