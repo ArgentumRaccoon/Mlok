@@ -13,26 +13,21 @@ inline void* PtrAdd(const void* const Ptr, const std::uintptr_t& Amount) noexcep
     return reinterpret_cast<void*>(reinterpret_cast<std::uintptr_t>(Ptr) + Amount);
 }
 
-MlokAllocator::MlokAllocator(void* const inStart, const size_t inSize) noexcept
+MlokAllocator::MlokAllocator(void* const inStart, const size_t inSize, const MemoryTag inTag) noexcept
     : Start { inStart }
     , MemStats { inSize, 0, 0 }
+    , Tag { inTag }
 {
-    for (size_t TagId = 0; TagId < MEMORY_TAG_MAX; ++TagId)
-    {
-        MemStats.TaggedAllocations[TagId] = 0;
-    }
 }
 
 MlokAllocator::MlokAllocator(MlokAllocator&& inAllocator) noexcept
     : Start { inAllocator.Start }
     , MemStats { inAllocator.MemStats }
+    , Tag { inAllocator.Tag }
 {
     inAllocator.Start = nullptr;
     inAllocator.MemStats = { 0, 0, 0 };
-    for (size_t TagId = 0; TagId < MEMORY_TAG_MAX; ++TagId)
-    {
-        inAllocator.MemStats.TaggedAllocations[TagId] = 0;
-    }
+    inAllocator.Tag = MemoryTag::MEMORY_TAG_MAX;
 }
 
 MlokAllocator::~MlokAllocator() noexcept
@@ -56,8 +51,8 @@ MlokAllocator& MlokAllocator::operator=(MlokAllocator&& inAllocator) noexcept
     return *this;
 }
 
-MlokLinearAllocator::MlokLinearAllocator(void* const inStart, const size_t inSize) noexcept
-    : MlokAllocator(inStart, inSize)
+MlokLinearAllocator::MlokLinearAllocator(void* const inStart, const size_t inSize, const MemoryTag inTag) noexcept
+    : MlokAllocator(inStart, inSize, inTag)
     , pCurrent { const_cast<void*>(Start) }
 {
 
@@ -83,7 +78,7 @@ MlokLinearAllocator& MlokLinearAllocator::operator=(MlokLinearAllocator&& inAllo
     return *this;
 }
 
-void* MlokLinearAllocator::Allocate(const size_t& inSize, MemoryTag Tag, const std::uintptr_t& Alignment) noexcept
+void* MlokLinearAllocator::Allocate(const size_t& inSize, const std::uintptr_t& Alignment) noexcept
 {
     assert(inSize > 0 && Alignment > 0);
 
@@ -99,7 +94,7 @@ void* MlokLinearAllocator::Allocate(const size_t& inSize, MemoryTag Tag, const s
     return AlignedAddr;
 }
 
-void MlokLinearAllocator::Free(void* const pData, size_t inSize, MemoryTag Tag) noexcept
+void MlokLinearAllocator::Free(void* const pData, size_t inSize) noexcept
 {
     // No direct Free operation for LinearAllocator (using Rewind and Clear instead)
 }

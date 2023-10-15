@@ -29,7 +29,7 @@ typedef enum MemoryTag
 class MlokAllocator
 {
     public:
-        MlokAllocator(void* const inStart, const size_t inSize) noexcept;
+        MlokAllocator(void* const inStart, const size_t inSize, const MemoryTag inTag) noexcept;
         MlokAllocator(const MlokAllocator& inAllocator) = delete;
         MlokAllocator(MlokAllocator&& inAllocator) noexcept;
         virtual ~MlokAllocator() noexcept;
@@ -38,8 +38,8 @@ class MlokAllocator
         MlokAllocator& operator=(MlokAllocator&& inAllocator) noexcept;
 
         // Abstact class, leaving Allocate and Free implementation for the concrete allocators
-        virtual void* Allocate(const size_t& inSize, MemoryTag Tag, const std::uintptr_t& Alignment = sizeof(std::intptr_t)) = 0;
-        virtual void Free(void* const pData, size_t inSize, MemoryTag Tag) = 0;
+        virtual void* Allocate(const size_t& inSize, const std::uintptr_t& Alignment = sizeof(std::intptr_t)) = 0;
+        virtual void Free(void* const pData, size_t inSize) = 0;
 
         const void* GetStart() const noexcept { return Start; }
         const size_t& GetSize() const noexcept { return MemStats.Size; }
@@ -50,6 +50,7 @@ class MlokAllocator
 
     protected:
         void* Start;
+        MemoryTag Tag;
 
         struct MemStats
         {
@@ -64,7 +65,7 @@ class MlokAllocator
 class MlokLinearAllocator : public MlokAllocator
 {
     public:
-        MlokLinearAllocator(void* const inStart, const size_t inSize) noexcept;
+        MlokLinearAllocator(void* const inStart, const size_t inSize, const MemoryTag inTag) noexcept;
         MlokLinearAllocator(const MlokLinearAllocator& inAllocator) = delete;
         MlokLinearAllocator(MlokLinearAllocator&& inAllocator) noexcept;
         ~MlokLinearAllocator();
@@ -72,8 +73,8 @@ class MlokLinearAllocator : public MlokAllocator
         MlokLinearAllocator& operator=(MlokLinearAllocator& inAllocator) = delete;
         MlokLinearAllocator& operator=(MlokLinearAllocator&& inAllocator) noexcept;
 
-        virtual void* Allocate(const size_t& inSize, MemoryTag Tag, const std::uintptr_t& Alignment = sizeof(std::intptr_t)) noexcept override;
-        virtual void Free(void* const pData, size_t inSize, MemoryTag Tag) noexcept override;        
+        virtual void* Allocate(const size_t& inSize, const std::uintptr_t& Alignment = sizeof(std::intptr_t)) noexcept override;
+        virtual void Free(void* const pData, size_t inSize) noexcept override;        
 
         void* GetCurrent() const noexcept { return pCurrent; }
 
@@ -82,4 +83,49 @@ class MlokLinearAllocator : public MlokAllocator
 
     protected:
         void* pCurrent;
+};
+
+template<typename T, typename AllocatorType>
+class AllocatorSTLAdaptor
+{
+    public:
+        using value_type = T;
+
+        AllocatorSTLAdaptor() = delete;
+        AllocatorSTLAdaptor(AllocatorType& inAllocator) noexcept
+            : Allocator(inAllocator)
+        { }
+
+        template<typename U>
+        AllocatorSTLAdaptor(const AllocatorSTLAdaptor<U, AllocatorType>& Other) noexcept
+            : Allocator { Other.Allocator }
+        { }
+
+        [[nodiscard]] constexpr T* allocate(size_t Size)
+        {
+            return reinterpret_cast<T*>(Allocator.Allocate(Size * sizeof(T), alignof(T)));
+        }
+
+        constexpr void deallocate(T* Ptr, [[maybe_unused]] size_t Size) noexcept
+        {
+            Allocator.Free(Ptr, Size);
+        }
+
+        size_t MaxAllocationSize() const noexcept
+        {
+            return Allocator.GetSize();
+        }
+
+        bool operator==(const AllocatorSTLAdaptor<T, AllocatorType>& Other) const noexcept
+        {
+            return Allocator.GetStart() == Other.GetStart() &&
+                   Allocator.GetSize() == Other.GetSize();
+        }
+
+        bool operator!=(const AllocatorSTLAdaptor<T, AllocatorType>& Other) const noexcept
+        {
+            return !(*this == Other);
+        }
+
+        AllocatorType& Allocator;
 };
