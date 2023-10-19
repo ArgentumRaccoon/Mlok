@@ -2,8 +2,6 @@
 
 #include "Defines.h"
 
-#include <string>
-
 #ifdef MPLATFORM_LINUX
     #include <xcb/xcb.h>
     #include <X11/keysym.h>
@@ -39,6 +37,11 @@ class Platform
         virtual double GetAbsoluteTime() = 0;
 
         virtual void PlatformSleep(uint64_t ms) = 0;
+
+        // Renderer
+        // Vulkan 
+        // TODO: think on a more flexible and convenient way of declaring platform specific and renderer specific calls
+        virtual void GetRequiredExtensionNames(std::vector<const char*>& OutExtensions) const = 0;
 };
 
 #ifdef MPLATFORM_WINDOWS
@@ -69,6 +72,10 @@ class PlatformWin32 : public Platform
         virtual double GetAbsoluteTime() override;
 
         virtual void PlatformSleep(uint64_t ms) override;
+
+        // Renderer
+        // Vulkan
+        virtual void GetRequiredExtensionNames(std::vector<const char*>& OutExtensions) const override;
 
     private:
         HINSTANCE hInstance;
@@ -115,6 +122,10 @@ class PlatformLinux : public Platform
 
         virtual void PlatformSleep(uint64_t ms) override;
 
+        // Renderer
+        // Vulkan
+        virtual void GetRequiredExtensionNames(std::vector<const char*>& OutExtensions) const override;
+        
     private:
         Display* pDisplay;
         xcb_connection_t* pConnection;

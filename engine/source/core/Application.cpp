@@ -37,7 +37,7 @@ bool Application::Create(const ApplicationConfig& Config)
         return false;
     }
 
-    if (!Renderer::Get()->Initialize(Config.Name))
+    if (!Renderer::Get()->Initialize(Config.Name, State.Width, State.Height))
     {
         Logger::Get()->MFatal("Failed to initialize Renderer. Shutting down...");
         return false;
@@ -105,6 +105,8 @@ bool Application::Run()
     
     State.bIsRunning = false;
 
+    Renderer::Get()->Shutdown();
+
     Platform::Get()->Shutdown();
 
     InputSystem::Get()->Shutdown();
@@ -121,6 +123,12 @@ bool Application::Run()
 void Application::Stop()
 {
     State.bIsRunning = false;
+}
+
+void Application::GetFramebufferSize(uint32_t* OutWidth, uint32_t* OutHeight) const
+{
+    *OutWidth  = State.Width;
+    *OutHeight = State.Height;
 }
 
 bool ApplicationOnEvent(uint16_t Code, void* Sender, void* ListenerInst, EventContext Context)

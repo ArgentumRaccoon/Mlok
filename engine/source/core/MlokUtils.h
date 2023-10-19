@@ -2,7 +2,7 @@
 
 #include "Defines.h"
 
-#include <string>
+#include <cstring>
 
 namespace MlokUtils
 {
@@ -20,5 +20,10 @@ namespace MlokUtils
         std::unique_ptr<char[]> Buffer(new char[Size]);
         std::snprintf(Buffer.get(), Size, Format.c_str(), Args...);
         return std::string(Buffer.get(), Buffer.get() + Size - 1);
+    }
+
+    MAPI MINLINE bool StringsAreEqual(const char* Str1, const char* Str2)
+    {
+        return strcmp(Str1, Str2);
     }
 }

@@ -165,6 +165,11 @@ void PlatformWin32::PlatformSleep(uint64_t ms)
     Sleep(ms);
 }
 
+void PlatformWin32::GetRequiredExtensionNames(std::vector<const char*>& OutExtensions) const
+{
+    OutExtensions.push_back("VK_KHR_win32_surface");
+}
+
 LRESULT PlatformWin32::Win32ProcessMessage(HWND hWnd, uint32_t Message, WPARAM wParam, LPARAM lParam)
 {
     switch(Message)

@@ -258,4 +258,9 @@ void PlatformLinux::PlatformSleep(uint64_t ms)
     #endif
 }
 
+void PlatformLinux::GetRequiredExtensionNames(std::vector<const char*>& OutExtensions) const
+{
+    OutExtensions.push_back("VK_KHR_xcb_surface");
+}
+
 #endif // MPLATFORM_LINUX

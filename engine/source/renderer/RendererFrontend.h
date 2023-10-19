@@ -12,7 +12,7 @@ class Renderer
             return &RendererHandle;
         }
 
-        bool Initialize(const std::string& AppName);
+        bool Initialize(const std::string& AppName, const uint32_t FramebufferWidth, const uint32_t FramebufferHeight);
         void Shutdown();
 
         void OnResized(uint16_t NewWidth, uint16_t NewHeight);

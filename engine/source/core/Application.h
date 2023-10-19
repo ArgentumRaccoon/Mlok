@@ -24,6 +24,8 @@ class MAPI Application
         bool Run();
         void Stop();
 
+        void GetFramebufferSize(uint32_t* OutWidth, uint32_t* OutHeight) const;
+
     private:
         struct AppState
         {
@@ -33,8 +35,6 @@ class MAPI Application
             int16_t Height;
             double LastTime;
         } State;
-
-        void GetFramebufferSize(uint32_t* OutWidth, uint32_t* OutHeight) const;
 
         std::unique_ptr<MlokClock> AppClock;
 };
