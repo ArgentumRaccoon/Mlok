@@ -10,7 +10,8 @@ namespace MlokUtils
     template<typename... TArgs>
     MAPI std::string StringFormat(const std::string& Format, TArgs&&... Args)
     {
-        int SizeS = std::snprintf(nullptr, 0, Format.c_str(), Args...) + 1;
+        const char* const CFormat = Format.c_str();
+        int SizeS = std::snprintf(nullptr, 0, CFormat, Args...) + 1;
         if (SizeS <= 0)
         {
             return std::string {};
@@ -18,7 +19,7 @@ namespace MlokUtils
 
         size_t Size = static_cast<size_t>(SizeS);
         std::unique_ptr<char[]> Buffer(new char[Size]);
-        std::snprintf(Buffer.get(), Size, Format.c_str(), Args...);
+        std::snprintf(Buffer.get(), Size, CFormat, Args...);
         return std::string(Buffer.get(), Buffer.get() + Size - 1);
     }
 
