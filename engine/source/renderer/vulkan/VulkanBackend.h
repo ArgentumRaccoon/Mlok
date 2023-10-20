@@ -18,4 +18,7 @@ class VulkanBackend : public RendererBackend
 
         uint32_t CachedFramebufferWidth { 0 };
         uint32_t CachedFramebufferHeight { 0 };
+
+        // Dynamic loader for ext calls
+        vk::DynamicLoader dl;
 };

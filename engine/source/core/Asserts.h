@@ -34,7 +34,7 @@ MAPI void ReportAssertionFailure(const char* Expression, const char* Message, co
             }                                                                   \
         }
 
-#ifdef _DEBUG
+#ifndef NDEBUG
 #define M_ASSERT_DEBUG(expr)                                            \
         {                                                               \
             if (expr) {}                                                \

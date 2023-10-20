@@ -285,6 +285,3 @@ LRESULT Platform::Win32ProcessMessage(HWND hWnd, uint32_t Message, WPARAM wParam
 }
 
 #endif // MPLATFORM_WINDOWS
-
-#ifdef MPLATFORM_LINUX
-#endif // MPLATFORM_LINUX

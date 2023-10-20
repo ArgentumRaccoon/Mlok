@@ -12,7 +12,7 @@ class VulkanContext
         vk::Instance Instance;
         vk::AllocationCallbacks* Allocator;
         vk::SurfaceKHR Surface;
-#ifdef _DEBUG
+#ifndef NDEBUG
         vk::DebugUtilsMessengerEXT DebugMessanger;
 #endif
         

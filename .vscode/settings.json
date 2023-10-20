@@ -64,7 +64,9 @@
         "xlocbuf": "cpp",
         "xlocmes": "cpp",
         "xlocmon": "cpp",
-        "xloctime": "cpp"
+        "xloctime": "cpp",
+        "array": "cpp",
+        "span": "cpp"
     },
     "workbench.editor.enablePreviewFromCodeNavigation": false
 }
