@@ -22,6 +22,7 @@ void InputSystem::Initialize(size_t* outMemReq, void* Ptr)
 
 void InputSystem::Shutdown()
 {
+    Instance = nullptr;
 }
 
 void InputSystem::Update(double DeltaTime)

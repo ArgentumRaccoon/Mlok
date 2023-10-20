@@ -38,6 +38,8 @@ void Renderer::Shutdown()
     {
         Instance->Backend->Shutdown();
     }
+
+    Instance = nullptr;
 }
 
 void Renderer::OnResized(uint16_t NewWidth, uint16_t NewHeight)

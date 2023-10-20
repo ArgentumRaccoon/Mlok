@@ -119,6 +119,8 @@ void Platform::Shutdown()
     XAuthoRepeatOn(pDisplay);
 
     xcb_destroy_window(pConnection, Window);
+
+    Instance = nullptr;
 }
 
 bool Platform::PumpMessages()

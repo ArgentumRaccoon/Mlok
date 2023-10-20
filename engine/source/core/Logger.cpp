@@ -24,6 +24,8 @@ bool Logger::Initialize(size_t* outMemReq, void* Ptr)
 void Logger::Shutdown()
 {
     // TODO: close file
+
+    Instance = nullptr;
 }
 
 std::ostream& operator<<(std::ostream& os, const LogLevel& Level)

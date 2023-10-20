@@ -101,6 +101,8 @@ void Platform::Shutdown()
         DestroyWindow(Instance->hWnd);
         Instance->hWnd = nullptr;
     }
+
+    Instance = nullptr;
 }
 
 bool Platform::PumpMessages()

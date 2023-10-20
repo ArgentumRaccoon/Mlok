@@ -25,6 +25,8 @@ void EventSystem::Shutdown()
     {
         Instance->RegisteredEvents[i].Events.clear();
     }
+
+    Instance = nullptr;
 }
 
 bool EventSystem::RegisterEvent(uint16_t Code, void* Listener, PFN_OnEvent OnEvent)
