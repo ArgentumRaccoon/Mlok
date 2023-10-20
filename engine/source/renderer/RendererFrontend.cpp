@@ -25,7 +25,7 @@ bool Renderer::Initialize(size_t* outMemReq, void* Ptr,
     Instance->Backend = std::make_unique<VulkanBackend>(); // TODO: make some more flexible way to choose renderer backend
     if (!Instance->Backend->Initialize(AppName, FramebufferWidth, FramebufferHeight))
     {
-        Logger::Get()->MFatal("Renderer backend failed to initialize. Shutting down...");
+        MlokFatal("Renderer backend failed to initialize. Shutting down...");
         return false;
     }
 
@@ -48,7 +48,7 @@ void Renderer::OnResized(uint16_t NewWidth, uint16_t NewHeight)
     }
     else
     {
-        Logger::Get()->MWarning("Renderer backend does not exist on calling RendererOnResized: %i %i", NewWidth, NewHeight);
+        MlokWarning("Renderer backend does not exist on calling RendererOnResized: %i %i", NewWidth, NewHeight);
     }
 }
 
@@ -60,7 +60,7 @@ bool Renderer::DrawFrame(RenderPacket* Packet)
 
         if (!bResult)
         {
-            Logger::Get()->MError("Renderer EndFrame failed. Shutting down...");
+            MlokError("Renderer EndFrame failed. Shutting down...");
             return false;
         }
     }
@@ -72,7 +72,7 @@ bool Renderer::BeginFrame(float DeltaTime)
 {
     if (!Backend)
     {
-        Logger::Get()->MWarning("Renderer backend does not exist on calling BeginFrame");
+        MlokWarning("Renderer backend does not exist on calling BeginFrame");
         return false;
     }
 
@@ -83,7 +83,7 @@ bool Renderer::EndFrame(float DeltaTime)
 {
     if (!Backend)
     {
-        Logger::Get()->MWarning("Renderer backend does not exist on calling EndFrame");
+        MlokWarning("Renderer backend does not exist on calling EndFrame");
         return false;
     }
     

@@ -54,7 +54,7 @@ bool Application::Create(const ApplicationConfig& Config)
     if (!Renderer::Get()->Initialize(&RendererMemoryRequirement, SubsystemsAllocator->Allocate(RendererMemoryRequirement), 
                                      Config.Name, State.Width, State.Height))
     {
-        Logger::Get()->MFatal("Failed to initialize Renderer. Shutting down...");
+        MlokFatal("Failed to initialize Renderer. Shutting down...");
         return false;
     }
 

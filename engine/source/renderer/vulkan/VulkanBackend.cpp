@@ -21,10 +21,10 @@ bool VulkanBackend::Initialize(const std::string& AppName, const uint32_t Frameb
 
 #ifdef _DEBUG
     RequiredExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-    Logger::Get()->MDebug("Required Vulkan Extensions: ");
+    MlokDebug("Required Vulkan Extensions: ");
     for (const auto& ExtName : RequiredExtensions)
     {
-        Logger::Get()->MDebug(ExtName);
+        MlokDebug(ExtName);
     }
 #endif
 
@@ -37,21 +37,21 @@ bool VulkanBackend::Initialize(const std::string& AppName, const uint32_t Frameb
     // Check if Required Layers are presented
     for (const auto& ReqLayer : RequiredValidationLayerNames)
     {
-        Logger::Get()->MInfo("Searching for layer: %s...", ReqLayer);
+        MlokInfo("Searching for layer: %s...", ReqLayer);
         bool bFound = false;
         for (const auto& LayerToCheck : LayerProperties)
         {
             if (MlokUtils::StringsAreEqual(ReqLayer, LayerToCheck.layerName.data()))
             {
                 bFound = true;
-                Logger::Get()->MInfo("Found.");
+                MlokInfo("Found.");
                 break;
             }
         }
 
         if (!bFound)
         {
-            Logger::Get()->MFatal("Required validation layer is missing: %s", ReqLayer);
+            MlokFatal("Required validation layer is missing: %s", ReqLayer);
             return false;
         }
     }
@@ -64,17 +64,17 @@ bool VulkanBackend::Initialize(const std::string& AppName, const uint32_t Frameb
     }
     catch(const vk::SystemError& err)
     {
-        Logger::Get()->MFatal("Failed to create Vulkan Instance: %s", err.what());
+        MlokFatal("Failed to create Vulkan Instance: %s", err.what());
         return false;    
     }
-    Logger::Get()->MDebug("Vulkan Instance created.");
+    MlokDebug("Vulkan Instance created.");
 
     return true;
 }
 
 void VulkanBackend::Shutdown()
 {
-    Logger::Get()->MDebug("Destroying Vulkan Instance...");
+    MlokDebug("Destroying Vulkan Instance...");
     Context.Instance.destroy(Context.Allocator);
 }
 
