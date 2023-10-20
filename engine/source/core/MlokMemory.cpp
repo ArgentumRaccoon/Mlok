@@ -1,4 +1,7 @@
 #include "MlokMemory.h"
+
+#include "platform/Platform.h"
+
 #include <cassert> // TODO: replace with custom assert
 
 inline size_t AlignForwardAdjustment(const void* const Ptr, const size_t& Alignment) noexcept
@@ -18,6 +21,13 @@ MlokAllocator::MlokAllocator(void* const inStart, const size_t inSize, const Mem
     , MemStats { inSize, 0, 0 }
     , Tag { inTag }
 {
+    if (MemStats.Size > 0 && Start == nullptr)
+    {
+        // If no valid Start pointer passed, allocate manually
+        Start = Platform::PlatformAllocate(MemStats.Size, false);
+        Platform::PlatformZeroMemory(Start, MemStats.Size);
+        bUsedInitialAllocation = true;
+    }
 }
 
 MlokAllocator::MlokAllocator(MlokAllocator&& inAllocator) noexcept
@@ -32,6 +42,11 @@ MlokAllocator::MlokAllocator(MlokAllocator&& inAllocator) noexcept
 
 MlokAllocator::~MlokAllocator() noexcept
 {
+    if (bUsedInitialAllocation && Start != nullptr)
+    {
+        Platform::PlatformFree(Start, false);
+    }
+
     // TODO: replace with custom assert
     assert(MemStats.NumAllocations == 0 && MemStats.UsedBytes == 0);
 }

@@ -1,7 +1,21 @@
 #include "Logger.h"
 
-bool Logger::Initialize()
+Logger* Logger::Instance = nullptr;
+
+Logger* Logger::Get()
 {
+    return Instance;
+}
+
+bool Logger::Initialize(size_t* outMemReq, void* Ptr)
+{
+    *outMemReq = sizeof(Logger);
+    if (Ptr == nullptr)
+    {
+        return true;
+    }
+
+    Instance = static_cast<Logger*>(Ptr);
     // TODO: open File
 
     return true;

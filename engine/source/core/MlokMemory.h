@@ -26,6 +26,7 @@ typedef enum MemoryTag
     MEMORY_TAG_MAX
 } MemoryTag;
 
+// Allocators to use with STL containers
 class MlokAllocator
 {
     public:
@@ -60,6 +61,8 @@ class MlokAllocator
 
             size_t TaggedAllocations[MEMORY_TAG_MAX];
         } MemStats;
+
+        bool bUsedInitialAllocation = false;
 };
 
 class MlokLinearAllocator : public MlokAllocator
@@ -128,4 +131,9 @@ class AllocatorSTLAdaptor
         }
 
         AllocatorType& Allocator;
+};
+
+class MAPI MemorySystem
+{
+    
 };

@@ -147,14 +147,11 @@ typedef enum KeyboardKey
 class MAPI InputSystem
 {
     public:
-        static InputSystem* Get()
-        {
-            static InputSystem InputSystemInst;
-            return &InputSystemInst;
-        }
+        static InputSystem* Get();
 
-        void Initialize();
-        void Shutdown();
+        static void Initialize(size_t* outMemReq, void* Ptr);
+        static void Shutdown();
+
         void Update(double DeltaTime);
 
         bool IsKeyDown(KeyboardKey Key);
@@ -197,4 +194,6 @@ class MAPI InputSystem
         KeyboardState KeyboardPreviousState;
         MouseState MouseCurrentState;
         MouseState MousePreviousState;
+
+        static InputSystem* Instance;
 };

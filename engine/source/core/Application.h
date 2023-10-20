@@ -3,8 +3,8 @@
 #include "Defines.h"
 
 #include "MlokClock.h"
+#include "MlokMemory.h"
 
-#include <string>
 #include <memory>
 
 typedef struct ApplicationConfig
@@ -35,6 +35,8 @@ class MAPI Application
             int16_t Height;
             double LastTime;
         } State;
+
+        std::unique_ptr<MlokLinearAllocator> SubsystemsAllocator;
 
         std::unique_ptr<MlokClock> AppClock;
 };

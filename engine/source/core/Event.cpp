@@ -1,16 +1,29 @@
 #include "Event.h"
 #include "Logger.h"
 
-void EventSystem::Initialize()
-{
+EventSystem* EventSystem::Instance = nullptr;
 
+EventSystem* EventSystem::Get()
+{
+    return EventSystem::Instance;
+}
+
+void EventSystem::Initialize(size_t* outMemReq, void* Ptr)
+{
+    *outMemReq = sizeof(EventSystem);
+    if (Ptr == nullptr)
+    {
+        return;
+    }
+
+    Instance = static_cast<EventSystem*>(Ptr);
 }
 
 void EventSystem::Shutdown()
 {
     for (uint16_t i = 0; i < MAX_MESSAGE_CODES; ++i)
     {
-        RegisteredEvents[i].Events.clear();
+        Instance->RegisteredEvents[i].Events.clear();
     }
 }
 

@@ -6,14 +6,12 @@
 class Renderer
 {
     public:
-        static Renderer* Get()
-        {
-            static Renderer RendererHandle;
-            return &RendererHandle;
-        }
+        static Renderer* Get();
 
-        bool Initialize(const std::string& AppName, const uint32_t FramebufferWidth, const uint32_t FramebufferHeight);
-        void Shutdown();
+        static bool Initialize(size_t* outMemReq, void* Ptr,
+                               const std::string& AppName, 
+                               const uint32_t FramebufferWidth, const uint32_t FramebufferHeight);
+        static void Shutdown();
 
         void OnResized(uint16_t NewWidth, uint16_t NewHeight);
         bool DrawFrame(RenderPacket* Packet);
@@ -23,4 +21,6 @@ class Renderer
 
         bool BeginFrame(float DeltaTime);
         bool EndFrame(float DeltaTime);
+
+        static Renderer* Instance;
 };

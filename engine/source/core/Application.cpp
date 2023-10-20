@@ -15,29 +15,44 @@ bool Application::Create(const ApplicationConfig& Config)
     State.bIsRunning = false;
     State.bIsSuspended = false;
 
+    const uint64_t SystemAllocatorTotalSize = 32 * 1024 * 1024; // Should be more than enough
+    SubsystemsAllocator = std::make_unique<MlokLinearAllocator>(nullptr, SystemAllocatorTotalSize, MEMORY_TAG_LINEAR_ALLOCATOR);
+
     AppClock = std::make_unique<MlokClock>();
 
-    EventSystem::Get()->Initialize();
+    size_t EventSystemMemoryRequirement = 0;
+    EventSystem::Initialize(&EventSystemMemoryRequirement, nullptr);
+    EventSystem::Initialize(&EventSystemMemoryRequirement, SubsystemsAllocator->Allocate(EventSystemMemoryRequirement));
 
     EventSystem::Get()->RegisterEvent(EVENT_CODE_APPLICATION_QUIT, this, ApplicationOnEvent);
     EventSystem::Get()->RegisterEvent(EVENT_CODE_KEY_PRESSED, this, ApplicationOnKey);
     EventSystem::Get()->RegisterEvent(EVENT_CODE_KEY_RELEASED, this, ApplicationOnKey);
 
-    if (!Logger::Get()->Initialize())
+    size_t LoggerMemoryRequirement = 0;
+    Logger::Initialize(&LoggerMemoryRequirement, nullptr);
+    if (!Logger::Initialize(&LoggerMemoryRequirement, SubsystemsAllocator->Allocate(LoggerMemoryRequirement)))
     {
         MlokError("Failed to initialize Logger! Shutting down...");
         return false;
     }
 
-    InputSystem::Get()->Initialize();
+    size_t InputSystemMemoryRequirement = 0;
+    InputSystem::Initialize(&InputSystemMemoryRequirement, nullptr);
+    InputSystem::Initialize(&InputSystemMemoryRequirement, SubsystemsAllocator->Allocate(InputSystemMemoryRequirement));
 
-    if (!Platform::Get()->Startup(Config.Name, Config.StartPosX, Config.StartPosY, Config.StartWidth, Config.StartHeight))
+    size_t PlatformMemoryRequirement = 0;
+    Platform::Startup(&PlatformMemoryRequirement, nullptr, std::string(), 0, 0, 0, 0);
+    if (!Platform::Startup(&PlatformMemoryRequirement, SubsystemsAllocator->Allocate(PlatformMemoryRequirement), 
+                           Config.Name, Config.StartPosX, Config.StartPosY, Config.StartWidth, Config.StartHeight))
     {
         MlokError("Failed to initialize Platform! Shutting down...");
         return false;
     }
 
-    if (!Renderer::Get()->Initialize(Config.Name, State.Width, State.Height))
+    size_t RendererMemoryRequirement = 0;
+    Renderer::Initialize(&RendererMemoryRequirement, nullptr, std::string(), 0, 0);
+    if (!Renderer::Get()->Initialize(&RendererMemoryRequirement, SubsystemsAllocator->Allocate(RendererMemoryRequirement), 
+                                     Config.Name, State.Width, State.Height))
     {
         Logger::Get()->MFatal("Failed to initialize Renderer. Shutting down...");
         return false;
@@ -105,17 +120,17 @@ bool Application::Run()
     
     State.bIsRunning = false;
 
-    Renderer::Get()->Shutdown();
+    Renderer::Shutdown();
 
-    Platform::Get()->Shutdown();
+    Platform::Shutdown();
 
-    InputSystem::Get()->Shutdown();
+    InputSystem::Shutdown();
 
-    Logger::Get()->Shutdown();
+    Logger::Shutdown();
 
     EventSystem::Get()->UnregisterEvent(EVENT_CODE_APPLICATION_QUIT, this, ApplicationOnEvent);
 
-    EventSystem::Get()->Shutdown();
+    EventSystem::Shutdown();
 
     return true;
 }

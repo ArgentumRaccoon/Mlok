@@ -95,20 +95,17 @@ typedef enum SystemEventCode
 class MAPI EventSystem
 {
     public:
+        static EventSystem* Get();
 
-        static EventSystem* Get()
-        {
-            static EventSystem EventSystemInst;
-            return &EventSystemInst;
-        }
-
-        void Initialize();
-        void Shutdown();
+        static void Initialize(size_t* outMemReq, void* Ptr);
+        static void Shutdown();
 
         bool RegisterEvent(uint16_t Code, void* Listener, PFN_OnEvent OnEvent);
         bool UnregisterEvent(uint16_t Code, void* Listener, PFN_OnEvent OnEvent);
         bool FireEvent(uint16_t Code, void* Sender, EventContext Context);
-
+        
     private:
         EventCodeEntry RegisteredEvents[MAX_MESSAGE_CODES];
+
+        static EventSystem* Instance;
 };

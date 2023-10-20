@@ -3,10 +3,27 @@
 #include "renderer/vulkan/VulkanBackend.h"
 #include "core/Logger.h"
 
-bool Renderer::Initialize(const std::string& AppName, const uint32_t FramebufferWidth, const uint32_t FramebufferHeight)
+Renderer* Renderer::Instance = nullptr;
+
+Renderer* Renderer::Get()
 {
-    Backend = std::make_unique<VulkanBackend>(); // TODO: make some more flexible way to choose renderer backend
-    if (!Backend->Initialize(AppName, FramebufferWidth, FramebufferHeight))
+    return Instance;
+}
+
+bool Renderer::Initialize(size_t* outMemReq, void* Ptr,
+                          const std::string& AppName, 
+                          const uint32_t FramebufferWidth, const uint32_t FramebufferHeight)
+{    
+    *outMemReq = sizeof(Renderer);
+    if (Ptr == nullptr)
+    {
+        return true;
+    }
+
+    Instance = static_cast<Renderer*>(Ptr);
+
+    Instance->Backend = std::make_unique<VulkanBackend>(); // TODO: make some more flexible way to choose renderer backend
+    if (!Instance->Backend->Initialize(AppName, FramebufferWidth, FramebufferHeight))
     {
         Logger::Get()->MFatal("Renderer backend failed to initialize. Shutting down...");
         return false;
@@ -17,9 +34,9 @@ bool Renderer::Initialize(const std::string& AppName, const uint32_t Framebuffer
 
 void Renderer::Shutdown()
 {
-    if (Backend)
+    if (Instance->Backend)
     {
-        Backend->Shutdown();
+        Instance->Backend->Shutdown();
     }
 }
 

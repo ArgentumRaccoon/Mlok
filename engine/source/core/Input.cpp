@@ -2,14 +2,26 @@
 
 #include "Event.h"
 
-void InputSystem::Initialize()
-{
+InputSystem* InputSystem::Instance = nullptr;
 
+InputSystem* InputSystem::Get()
+{
+    return Instance;
+}
+
+void InputSystem::Initialize(size_t* outMemReq, void* Ptr)
+{
+    *outMemReq = sizeof(InputSystem);
+    if (Ptr == nullptr)
+    {
+        return;
+    }
+
+    Instance = static_cast<InputSystem*>(Ptr);
 }
 
 void InputSystem::Shutdown()
 {
-
 }
 
 void InputSystem::Update(double DeltaTime)

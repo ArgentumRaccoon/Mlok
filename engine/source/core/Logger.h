@@ -28,14 +28,10 @@ enum class LogLevel
 class MAPI Logger
 {
     public:
-        static Logger* Get()
-        {
-            static Logger LoggerHandle;
-            return &LoggerHandle;
-        }
+        static Logger* Get();
 
-        bool Initialize();
-        void Shutdown();
+        static bool Initialize(size_t* outMemReq, void* Ptr);
+        static void Shutdown();
 
         template<typename... TArgs>
         void LogOutput(const LogLevel& Level, const std::string& Message, TArgs&&... Args);
@@ -66,6 +62,8 @@ class MAPI Logger
             "\033[32m",
             "\033[37m"
         };
+
+        static Logger* Instance;
 };
 
 std::ostream& operator<<(std::ostream& os, const LogLevel& Level);

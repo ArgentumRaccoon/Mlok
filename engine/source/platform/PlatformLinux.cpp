@@ -4,16 +4,25 @@
 
 #include <cstdlib>
 
+Platform* Platform::Instance = nullptr;
+
 Platform* Platform::Get()
 {
-    static PlatformLinux PlatformHandle;
-    return &PlatformHandle;
+    return Instance;
 }
 
-bool PlatformLinux::Startup(const std::string& ApplicationName,
-                            int32_t X, int32_t Y, 
-                            int32_t Width, int32_t Height)
+bool Platform::Startup(const std::string& ApplicationName,
+                       int32_t X, int32_t Y, 
+                       int32_t Width, int32_t Height)
 {
+    *outMemReq = sizeof(Platform);
+    if (Ptr == nullptr)
+    {
+        return;
+    }
+
+    Instance = static_cast<Platform*>(Ptr);
+
     pDisplay = XOpenDisplay(nullptr);
 
     XAutoRepeatOff(pDisplay);
@@ -105,14 +114,14 @@ bool PlatformLinux::Startup(const std::string& ApplicationName,
     return true;
 }
 
-void PlatformLinux::Shutdown()
+void Platform::Shutdown()
 {
     XAuthoRepeatOn(pDisplay);
 
     xcb_destroy_window(pConnection, Window);
 }
 
-bool PlatformLinux::PumpMessages()
+bool Platform::PumpMessages()
 {
     xcb_generic_event_t* Event;
     xcb_client_message_event_t* ClientMessage;
@@ -196,53 +205,53 @@ bool PlatformLinux::PumpMessages()
     return !bQuitFlagged;
 }
 
-void* PlatformLinux::PlatformAllocate(size_t Size, bool bAligned)
+void* Platform::PlatformAllocate(size_t Size, bool bAligned)
 {
     return malloc(Size);
 }
 
-void  PlatformLinux::PlatformFree(void* Block, bool bAligned)
+void  Platform::PlatformFree(void* Block, bool bAligned)
 {
     free(Block);
 }
 
-void* PlatformLinux::PlatformZeroMemory(void* Block, size_t Size)
+void* Platform::PlatformZeroMemory(void* Block, size_t Size)
 {
     return memset(Block, 0, Size);
 }
 
-void* PlatformLinux::PlatformCopyMemory(void* Dst, const void* Src, size_t Size)
+void* Platform::PlatformCopyMemory(void* Dst, const void* Src, size_t Size)
 {
     return memcpy(Dst, Src, Size);
 }
 
-void* PlatformLinux::PlatformSetMemory(void* Dst, int32_t Value, size_t Size)
+void* Platform::PlatformSetMemory(void* Dst, int32_t Value, size_t Size)
 {
     return memset(Dst, Value, Size);
 }
 
-void PlatformLinux::ConsoleWrite(const char* Message, uint8_t Color)
+void Platform::ConsoleWrite(const char* Message, uint8_t Color)
 {
     const cher* ColorCodes[] = { "0;41", "1;31", "1;33", "1;34", "1;32", "1;30" }; // FATAL, ERROR, WARNING, INFO, DEBUG, VERBOSE
     
     printf("\033[%sm%s\033[0m", ColorCodes[Color], Message);
 }
 
-void PlatformLinux::ConsoleWriteError(const char* Message, uint8_t Color)
+void Platform::ConsoleWriteError(const char* Message, uint8_t Color)
 {
     const cher* ColorCodes[] = { "0;41", "1;31", "1;33", "1;34", "1;32", "1;30" }; // FATAL, ERROR, WARNING, INFO, DEBUG, VERBOSE
     
     printf("\033[%sm%s\033[0m", ColorCodes[Color], Message);
 }
 
-double PlatformLinux::GetAbsoluteTime()
+double Platform::GetAbsoluteTime()
 {
     struct timespec Now;
     clock_gettime(CLOCK_MONOTONIC, &Now);
     return Now.tv_sec + now.tv_nsec * 0.000000001f;
 }
 
-void PlatformLinux::PlatformSleep(uint64_t ms)
+void Platform::PlatformSleep(uint64_t ms)
 {
     #if _POSIX_C_SOURCE >= 199309L
         struct timespec ts;
@@ -258,7 +267,7 @@ void PlatformLinux::PlatformSleep(uint64_t ms)
     #endif
 }
 
-void PlatformLinux::GetRequiredExtensionNames(std::vector<const char*>& OutExtensions) const
+void Platform::GetRequiredExtensionNames(std::vector<const char*>& OutExtensions) const
 {
     OutExtensions.push_back("VK_KHR_xcb_surface");
 }

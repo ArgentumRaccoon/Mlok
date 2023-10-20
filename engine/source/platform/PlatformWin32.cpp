@@ -8,27 +8,37 @@
 
 #include <cstdlib>
 
+Platform* Platform::Instance = nullptr;
+
 Platform* Platform::Get()
 {
-    static PlatformWin32 PlatformHandle;
-    return &PlatformHandle;
+    return Instance;
 }
 
-bool PlatformWin32::Startup(const std::string& ApplicationName,
-                            int32_t X, int32_t Y, 
-                            int32_t Width, int32_t Height)
+bool Platform::Startup(size_t* outMemReq, void* Ptr,
+                       const std::string& ApplicationName,
+                       int32_t X, int32_t Y, 
+                       int32_t Width, int32_t Height)
 {
-    hInstance = GetModuleHandleA(0);
+    *outMemReq = sizeof(Platform);
+    if (Ptr == nullptr)
+    {
+        return true;
+    }
+
+    Instance = static_cast<Platform*>(Ptr);
+    
+    Instance->hInstance = GetModuleHandleA(0);
     LPCSTR WindowClass = "MlokWindowClass";
 
-    HICON hIcon = LoadIcon(hInstance, IDI_APPLICATION);
+    HICON hIcon = LoadIcon(Instance->hInstance, IDI_APPLICATION);
     WNDCLASSA wc;
     memset(&wc, 0, sizeof(wc));
     wc.style = CS_DBLCLKS;
     wc.lpfnWndProc = Win32ProcessMessage;
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
-    wc.hInstance = hInstance;
+    wc.hInstance = Instance->hInstance;
     wc.hIcon = hIcon;
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
     wc.hbrBackground = NULL;
@@ -62,11 +72,11 @@ bool PlatformWin32::Startup(const std::string& ApplicationName,
     WindowWidth += BorderRect.right - BorderRect.left;
     WindowHeight += BorderRect.bottom - BorderRect.top;
 
-    hWnd = CreateWindowExA(WindowExStyle, WindowClass, ApplicationName.c_str(),
-                           WindowStyle, WindowX, WindowY, WindowWidth, WindowHeight,
-                           0, 0, hInstance, 0);
+    Instance->hWnd = CreateWindowExA(WindowExStyle, WindowClass, ApplicationName.c_str(),
+                                     WindowStyle, WindowX, WindowY, WindowWidth, WindowHeight,
+                                     0, 0, Instance->hInstance, 0);
 
-    if (!hWnd)
+    if (!Instance->hWnd)
     {
         MessageBoxA(NULL, "Window creation failed!", "Error", MB_ICONEXCLAMATION | MB_OK);
         return false;
@@ -74,26 +84,26 @@ bool PlatformWin32::Startup(const std::string& ApplicationName,
 
     bool bShouldActivate = true;
     int32_t ShowWindowCommandFlags = bShouldActivate ? SW_SHOW : SW_SHOWNOACTIVATE;
-    ShowWindow(hWnd, ShowWindowCommandFlags);
+    ShowWindow(Instance->hWnd, ShowWindowCommandFlags);
 
     LARGE_INTEGER Frequency;
     QueryPerformanceFrequency(&Frequency);
-    ClockFrequency = 1.f / (double)Frequency.QuadPart;
-    QueryPerformanceCounter(&StartTime);
+    Instance->ClockFrequency = 1.f / (double)Frequency.QuadPart;
+    QueryPerformanceCounter(&Instance->StartTime);
 
     return true;
 }
 
-void PlatformWin32::Shutdown()
+void Platform::Shutdown()
 {
-    if (hWnd)
+    if (Instance->hWnd)
     {
-        DestroyWindow(hWnd);
-        hWnd = nullptr;
+        DestroyWindow(Instance->hWnd);
+        Instance->hWnd = nullptr;
     }
 }
 
-bool PlatformWin32::PumpMessages()
+bool Platform::PumpMessages()
 {
     MSG Message;
     while(PeekMessageA(&Message, nullptr, 0, 0, PM_REMOVE))
@@ -106,32 +116,32 @@ bool PlatformWin32::PumpMessages()
 }
 
 
-void* PlatformWin32::PlatformAllocate(size_t Size, bool bAligned)
+void* Platform::PlatformAllocate(size_t Size, bool bAligned)
 {
     return malloc(Size);
 }
 
-void  PlatformWin32::PlatformFree(void* Block, bool bAligned)
+void  Platform::PlatformFree(void* Block, bool bAligned)
 {
     free(Block);
 }
 
-void* PlatformWin32::PlatformZeroMemory(void* Block, size_t Size)
+void* Platform::PlatformZeroMemory(void* Block, size_t Size)
 {
     return memset(Block, 0, Size);
 }
 
-void* PlatformWin32::PlatformCopyMemory(void* Dst, const void* Src, size_t Size)
+void* Platform::PlatformCopyMemory(void* Dst, const void* Src, size_t Size)
 {
     return memcpy(Dst, Src, Size);
 }
 
-void* PlatformWin32::PlatformSetMemory(void* Dst, int32_t Value, size_t Size)
+void* Platform::PlatformSetMemory(void* Dst, int32_t Value, size_t Size)
 {
     return memset(Dst, Value, Size);
 }
 
-void PlatformWin32::ConsoleWrite(const std::string& Message, uint8_t Color)
+void Platform::ConsoleWrite(const std::string& Message, uint8_t Color)
 {
     HANDLE ConsoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
     static uint8_t Levels[6] = { 64, 4, 6, 1, 2, 8 }; // FATAL, ERROR, WARNING, INFO, DEBUG, VERBOSE
@@ -142,7 +152,7 @@ void PlatformWin32::ConsoleWrite(const std::string& Message, uint8_t Color)
     WriteConsoleA(ConsoleHandle, Message.c_str(), static_cast<DWORD>(Message.length()), NumberWritten, nullptr);
 }
 
-void PlatformWin32::ConsoleWriteError(const std::string& Message, uint8_t Color)
+void Platform::ConsoleWriteError(const std::string& Message, uint8_t Color)
 {
     HANDLE ConsoleHandle = GetStdHandle(STD_ERROR_HANDLE);
     static uint8_t Levels[6] = { 64, 4, 6, 1, 2, 8 }; // FATAL, ERROR, WARNING, INFO, DEBUG, VERBOSE
@@ -153,24 +163,24 @@ void PlatformWin32::ConsoleWriteError(const std::string& Message, uint8_t Color)
     WriteConsoleA(ConsoleHandle, Message.c_str(), Message.length(), NumberWritten, nullptr);
 }
 
-double PlatformWin32::GetAbsoluteTime()
+double Platform::GetAbsoluteTime()
 {
     LARGE_INTEGER NowTime;
     QueryPerformanceCounter(&NowTime);
     return (double)NowTime.QuadPart * ClockFrequency;
 }
 
-void PlatformWin32::PlatformSleep(uint64_t ms)
+void Platform::PlatformSleep(uint64_t ms)
 {
     Sleep(ms);
 }
 
-void PlatformWin32::GetRequiredExtensionNames(std::vector<const char*>& OutExtensions) const
+void Platform::GetRequiredExtensionNames(std::vector<const char*>& OutExtensions) const
 {
     OutExtensions.push_back("VK_KHR_win32_surface");
 }
 
-LRESULT PlatformWin32::Win32ProcessMessage(HWND hWnd, uint32_t Message, WPARAM wParam, LPARAM lParam)
+LRESULT Platform::Win32ProcessMessage(HWND hWnd, uint32_t Message, WPARAM wParam, LPARAM lParam)
 {
     switch(Message)
     {
