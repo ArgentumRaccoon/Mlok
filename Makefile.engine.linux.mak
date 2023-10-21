@@ -3,7 +3,7 @@ OBJ_DIR := obj
 
 ASSEMBLY := engine
 EXTENSION := .so
-COMPILER_FLAGS := -g -Werror=vla -Wno-missing-braces -fdeclspec -fPIC --std=c++17
+COMPILER_FLAGS := -g -Werror=vla -Wno-missing-braces -Wno-format-security -fdeclspec -fPIC --std=c++17
 INCLUDE_FLAGS := -Iengine/source -I$(VULKAN_SDK)/include
 LINKER_FLAGS := -g -shared -lvulkan -lxcb -lX11 -lX11-xcb -lxkbcommon -L$(VULKAN_SDK)/lib -L/usr/X11R6/lib
 DEFINES := -DMEXPORT
