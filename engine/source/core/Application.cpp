@@ -65,14 +65,6 @@ bool Application::Run()
 {
     State.bIsRunning = true;
 
-    // TODO: remove after adding unit tests
-    MlokFatal("test fatal {}!", 3.14);
-    MlokError("test error {}!", 3.14);
-    MlokWarning("test warning {}!", 3.14);
-    MlokInfo("test info {}!", 3.14);
-    MlokDebug("test debug {}!", 3.14);
-    MlokVerbose("test verbose {}!", 3.14);
-
     AppClock->Start();
     AppClock->Update();
     State.LastTime = AppClock->GetElapsed();

@@ -37,3 +37,11 @@ std::ostream& operator<<(std::ostream& os, const LogLevel& Level)
 
     return os;
 }
+
+void ReportAssertionFailure(const char* Expression, const char* Message, const char* File, int32_t Line)
+{
+    if (Logger::Get())
+    {
+        Logger::Get()->LogOutput(LogLevel::LOG_LEVEL_FATAL, "Assertion Failure: %s, message: %s, in file: %s, line %d\n", Expression, Message, File, Line);
+    }
+}

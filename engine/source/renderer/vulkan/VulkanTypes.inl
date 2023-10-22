@@ -2,22 +2,19 @@
 
 #include "Defines.h"
 
+#include "core/MlokMemory.h"
+
+#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #include <vulkan/vulkan.hpp>
 
-#include "VulkanDevice.h"
-
-class VulkanContext
+typedef enum VulkanEventCode
 {
-    public:
-        vk::Instance Instance;
-        vk::AllocationCallbacks* Allocator;
-        vk::SurfaceKHR Surface;
-#ifndef NDEBUG
-        vk::DebugUtilsMessengerEXT DebugMessanger;
-#endif
-        
-        VulkanDevice Device;
 
-        uint32_t FramebufferWidth;
-        uint32_t FramebufferHeight;
-};
+} VulkanEventCode;
+
+typedef struct VulkanSwapchainSupportInfo
+{
+    vk::SurfaceCapabilitiesKHR SurfaceCapabilities;
+    std::vector<vk::SurfaceFormatKHR> Formats; // TODO: use allocator with tag
+    std::vector<vk::PresentModeKHR> PresentModes;// TODO: use allocator with tag
+} VulkanSwapchainSupportInfo;

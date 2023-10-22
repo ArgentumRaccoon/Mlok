@@ -5,6 +5,11 @@
 #include "core/Logger.h"
 #include "core/Event.h"
 #include "core/Input.h"
+#include "core/Asserts.h"
+
+#include "renderer/vulkan/VulkanTypes.inl"
+#include "renderer/vulkan/VulkanContext.h"
+#include <vulkan/vulkan_win32.h>
 
 #include <cstdlib>
 
@@ -180,6 +185,43 @@ void Platform::PlatformSleep(uint64_t ms)
 void Platform::GetRequiredExtensionNames(std::vector<const char*>& OutExtensions) const
 {
     OutExtensions.push_back("VK_KHR_win32_surface");
+}
+
+bool Platform::CreateVulkanSurface(VulkanContext* Context)
+{
+    if (!Context || !Instance)
+    {
+        return false;
+    }
+
+    // Win32 surface can be only created in C-style manner
+    // Later can be passed to initialize vk::SurfaceKHR
+    VkWin32SurfaceCreateInfoKHR CreateInfo {};
+    CreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+    CreateInfo.hinstance = hInstance;
+    CreateInfo.hwnd = hWnd;
+
+    VkSurfaceKHR VkSurface;
+    VkResult Result;
+
+    // Ugly, but need to somehow convert vk::AllocatorCallbacks* to VkAllocatorCallbacks*,
+    // and the convertion operator only returns a ref
+    if (Context->Allocator)
+    {
+        const VkAllocationCallbacks& Allocator = VkAllocationCallbacks(*Context->Allocator);
+        Result = vkCreateWin32SurfaceKHR(*Context->pInstance, &CreateInfo, &Allocator, &VkSurface);
+    }
+    else
+    {
+        Result = vkCreateWin32SurfaceKHR(*Context->pInstance, &CreateInfo, nullptr, &VkSurface);
+    }
+
+    M_ASSERT(Result == VK_SUCCESS);
+
+    Surface = VkSurface;
+    Context->Surface = VkSurface;
+
+    return true;
 }
 
 LRESULT Platform::Win32ProcessMessage(HWND hWnd, uint32_t Message, WPARAM wParam, LPARAM lParam)

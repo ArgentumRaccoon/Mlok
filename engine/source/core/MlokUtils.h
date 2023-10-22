@@ -27,4 +27,19 @@ namespace MlokUtils
     {
         return strcmp(Str1, Str2);
     }
+
+    MAPI MINLINE float BytesToKib(size_t Bytes)
+    {
+        return (float)Bytes / 1024.f;
+    }
+
+    MAPI MINLINE float BytesToMib(size_t Bytes)
+    {
+        return (float)Bytes / 1024.f / 1024.f;
+    }
+
+    MAPI MINLINE float BytesToGib(size_t Bytes)
+    {
+        return (float)Bytes / 1024.f / 1024.f / 1024.f;
+    }
 }

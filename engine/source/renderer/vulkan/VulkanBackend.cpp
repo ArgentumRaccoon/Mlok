@@ -1,11 +1,14 @@
-#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #include "VulkanBackend.h"
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 #include "platform/Platform.h"
 #include "core/Logger.h"
-
 #include "core/MlokUtils.h"
+#include "core/Asserts.h"
+
+#include "VulkanDevice.h"
+
+#include <memory>
 
 VKAPI_ATTR VkBool32 VKAPI_CALL VkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT MessageSeverity,
                                                VkDebugUtilsMessageSeverityFlagsEXT MessageTypes,
@@ -69,14 +72,14 @@ bool VulkanBackend::Initialize(const std::string& AppName, const uint32_t Frameb
     // Check if Required Layers are presented
     for (const auto& ReqLayer : RequiredValidationLayerNames)
     {
-        MlokInfo("Searching for layer: %s...", ReqLayer);
+        MlokDebug("Searching for layer: %s...", ReqLayer);
         bool bFound = false;
         for (const auto& LayerToCheck : LayerProperties)
         {
             if (MlokUtils::StringsAreEqual(ReqLayer, LayerToCheck.layerName.data()))
             {
                 bFound = true;
-                MlokInfo("Found.");
+                MlokDebug("Found.");
                 break;
             }
         }
@@ -90,69 +93,49 @@ bool VulkanBackend::Initialize(const std::string& AppName, const uint32_t Frameb
 #endif
 
     vk::InstanceCreateInfo InstanceCreateInfo({}, &ApplicationInfo, RequiredValidationLayerNames, RequiredExtensions);
-    try
+    if (!CreateInstance(InstanceCreateInfo))
     {
-        Context.Instance = vk::createInstance(InstanceCreateInfo, Context.Allocator);
-    }
-    catch(const vk::SystemError& err)
-    {
-        MlokFatal("Failed to create Vulkan Instance: %s", err.what());
-        return false;    
-    }
-    catch(...)
-    {
-        MlokFatal("Failed to create Vulkan Instance: Unknown Error");
         return false;
     }
-    MlokDebug("Vulkan Instance created.");
-
-    VULKAN_HPP_DEFAULT_DISPATCHER.init(Context.Instance);
 
 #ifndef NDEBUG
-    MlokDebug("Creating Vulkan Debugger...");
+    if (!CreateDebugger())
+    {
+        return false;
+    }
+#endif
 
-    uint32_t MessageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT |
-                               VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT; 
-                               // | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
-                               // | VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
-    vk::DebugUtilsMessengerCreateInfoEXT DebugCreateInfo(vk::DebugUtilsMessengerCreateFlagsEXT(),
-                                                         vk::DebugUtilsMessageSeverityFlagsEXT(MessageSeverity),
-                                                         vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation,
-                                                         VkDebugCallback);
-    
-    try
+    if (!CreateSurface())
     {
-        Context.DebugMessanger = Context.Instance.createDebugUtilsMessengerEXT(DebugCreateInfo, Context.Allocator);
-    }
-    catch(const vk::SystemError& err)
-    {
-        MlokFatal("Failed to create Vulkan Debug Messenger: %s", err.what());
-        return false;    
-    }
-    catch(...)
-    {
-        MlokFatal("Failed to create Vulkan Debug Messenger: Unknown Error");
         return false;
     }
 
-     MlokInfo("Vulkan Debugger created.");
-#endif
+    if (!CreateDevice())
+    {
+         return false;
+    }
 
     return true;
 }
 
 void VulkanBackend::Shutdown()
 {
+    MlokInfo("Destroying Vulkan Device...");
+    Context.pDevice->Destroy();
+
+    MlokInfo("Destroying Vulkan Surface...");
+    Context.pInstance->destroySurfaceKHR(Context.Surface, Context.Allocator);
+
 #ifndef NDEBUG
     MlokInfo("Destroying Vulkan Debugger...");
-    if (Context.DebugMessanger)
+    if (Context.DebugMessenger)
     {
-        Context.Instance.destroyDebugUtilsMessengerEXT(Context.DebugMessanger, Context.Allocator);
+        Context.pInstance->destroyDebugUtilsMessengerEXT(Context.DebugMessenger, Context.Allocator);
     }
 #endif
 
-    MlokDebug("Destroying Vulkan Instance...");
-    Context.Instance.destroy(Context.Allocator);
+    MlokInfo("Destroying Vulkan Instance...");
+    Context.pInstance->destroy(Context.Allocator);
 }
 
 void VulkanBackend::OnResized(uint16_t NewWidth, uint16_t Height)
@@ -168,5 +151,87 @@ bool VulkanBackend::BeginFrame(float DeltaTime)
 bool VulkanBackend::EndFrame(float DeltaTime)
 {
     FrameCount++;
+    return true;
+}
+
+bool VulkanBackend::CreateInstance(const vk::InstanceCreateInfo& CreateInfo)
+{
+    try
+    {
+        Context.pInstance = std::make_unique<vk::Instance>(vk::createInstance(CreateInfo, Context.Allocator));
+    }
+    catch(const vk::SystemError& err)
+    {
+        MlokFatal("Failed to create Vulkan Instance: %s", err.what());
+        return false;    
+    }
+    catch(...)
+    {
+        MlokFatal("Failed to create Vulkan Instance: Unknown Error");
+        return false;
+    }
+    MlokInfo("Vulkan Instance created.");
+
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(*Context.pInstance);
+
+    return true;
+}
+
+bool VulkanBackend::CreateDebugger()
+{
+    MlokInfo("Creating Vulkan Debugger...");
+
+    uint32_t MessageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT |
+                               VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT; 
+                               // | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
+                               // | VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
+    vk::DebugUtilsMessengerCreateInfoEXT DebugCreateInfo(vk::DebugUtilsMessengerCreateFlagsEXT(),
+                                                         vk::DebugUtilsMessageSeverityFlagsEXT(MessageSeverity),
+                                                         vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation,
+                                                         VkDebugCallback);
+    
+    try
+    {
+        Context.DebugMessenger = Context.pInstance->createDebugUtilsMessengerEXT(DebugCreateInfo, Context.Allocator);;
+    }
+    catch(const vk::SystemError& err)
+    {
+        MlokFatal("Failed to create Vulkan Debug Messenger: %s", err.what());
+        return false;    
+    }
+    catch(...)
+    {
+        MlokFatal("Failed to create Vulkan Debug Messenger: Unknown Error");
+        return false;
+    }
+
+    MlokInfo("Vulkan Debugger created.");
+
+    return true;
+}
+
+bool VulkanBackend::CreateSurface()
+{
+    MlokInfo("Creating Vulkan Surface...");
+    if (!Platform::Get()->CreateVulkanSurface(&Context))
+    {
+        MlokFatal("Failed to create Vulkan Surface");
+        return false;
+    }
+    MlokInfo("Vulkan Surface created.");
+
+    return true;
+}
+
+bool VulkanBackend::CreateDevice()
+{
+    MlokInfo("Creating Vulkan Device...");
+    Context.pDevice = std::make_unique<VulkanDevice>(&Context);  
+    if (Context.pDevice->LogicalDevice)
+    {  
+        VULKAN_HPP_DEFAULT_DISPATCHER.init(Context.pDevice->LogicalDevice);
+    }
+    MlokInfo("Vulkan Device created.");
+
     return true;
 }

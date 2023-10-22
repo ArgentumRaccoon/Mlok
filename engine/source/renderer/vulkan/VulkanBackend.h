@@ -2,6 +2,7 @@
 
 #include "renderer/RendererBackend.h"
 #include "VulkanTypes.inl"
+#include "VulkanContext.h"
 
 class VulkanBackend : public RendererBackend
 {
@@ -21,4 +22,10 @@ class VulkanBackend : public RendererBackend
 
         // Dynamic loader for ext calls
         vk::DynamicLoader dl;
+
+    private:
+        bool CreateInstance(const vk::InstanceCreateInfo& CreateInfo);
+        bool CreateDebugger();
+        bool CreateSurface();
+        bool CreateDevice();
 };

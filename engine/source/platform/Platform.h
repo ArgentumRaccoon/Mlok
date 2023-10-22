@@ -5,6 +5,8 @@
 #ifdef MPLATFORM_WINDOWS
     #include <windows.h>
     #include <windowsx.h>
+
+    #include "renderer/vulkan/VulkanTypes.inl"
 #endif
 
 #ifdef MPLATFORM_LINUX
@@ -15,6 +17,8 @@
     #include <X11/Xlib-xcb.h>
     #include <sys/time.h>
 #endif
+
+class VulkanContext;
 
 class Platform
 {
@@ -48,6 +52,7 @@ class Platform
         // Vulkan 
         // TODO: think on a more flexible and convenient way of declaring platform specific and renderer specific calls
         void GetRequiredExtensionNames(std::vector<const char*>& OutExtensions) const;
+        bool CreateVulkanSurface(VulkanContext* Context);
     
     private:
     #ifdef MPLATFORM_WINDOWS
@@ -68,6 +73,8 @@ class Platform
         xcb_atom_t wmProtocols;
         xcb_atom_t wmDeleteWin;
     #endif // MPLATFORM_LINUX
+
+        vk::SurfaceKHR Surface;
 
         static Platform* Instance;
 };
