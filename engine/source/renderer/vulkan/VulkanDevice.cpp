@@ -52,20 +52,21 @@ bool VulkanDevice::Create(VulkanContext* Context)
     std::vector<vk::DeviceQueueCreateInfo> QueueCreateInfos;
     std::vector<float> QueuePriorities { 1.f };
 
-    for (auto& QueueIndex : Indices)
+    for (auto& QueueFamilyIndex : Indices)
     {
-        QueueCreateInfos.push_back({ vk::DeviceQueueCreateFlags(), QueueIndex, QueuePriorities });
+        QueueCreateInfos.push_back(vk::DeviceQueueCreateInfo()
+                                   .setQueueFamilyIndex(QueueFamilyIndex)
+                                   .setQueuePriorities(QueuePriorities));
     }
 
     vk::PhysicalDeviceFeatures DeviceFeatures {};
     DeviceFeatures.samplerAnisotropy = VK_TRUE;
 
     std::vector<const char*> EnabledExtensions { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
-    vk::DeviceCreateInfo CreateInfo(vk::DeviceCreateFlags(),
-                                    QueueCreateInfos,
-                                    {},
-                                    EnabledExtensions, 
-                                    &Features);
+    vk::DeviceCreateInfo CreateInfo {};
+    CreateInfo.setQueueCreateInfos(QueueCreateInfos)
+              .setPEnabledExtensionNames(EnabledExtensions)
+              .setPEnabledFeatures(&Features);
 
     try
     {
@@ -88,7 +89,8 @@ bool VulkanDevice::Create(VulkanContext* Context)
     TransferQueue = LogicalDevice.getQueue(TransferQueueIndex, 0);
     // ComputeQueue  = LogicalDevice.getQueue(ComputeQueueIndex,  0);
 
-    vk::CommandPoolCreateInfo PoolCreateInfo(vk::CommandPoolCreateFlags {}, GraphicsQueueIndex);
+    vk::CommandPoolCreateInfo PoolCreateInfo {};
+    PoolCreateInfo.setQueueFamilyIndex(GraphicsQueueIndex);
     GraphicsCommandPool = LogicalDevice.createCommandPool(PoolCreateInfo, Context->Allocator);
     MlokInfo("Graphics Command Pool created.");
 

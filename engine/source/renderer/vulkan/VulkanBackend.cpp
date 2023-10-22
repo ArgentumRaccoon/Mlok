@@ -92,8 +92,10 @@ bool VulkanBackend::Initialize(const std::string& AppName, const uint32_t Frameb
     }
 #endif
 
-    vk::InstanceCreateInfo InstanceCreateInfo({}, &ApplicationInfo, RequiredValidationLayerNames, RequiredExtensions);
-    if (!CreateInstance(InstanceCreateInfo))
+    if (!CreateInstance(vk::InstanceCreateInfo()
+                        .setPApplicationInfo(&ApplicationInfo)
+                        .setPEnabledLayerNames(RequiredValidationLayerNames)
+                        .setPEnabledExtensionNames(RequiredExtensions)))
     {
         return false;
     }
@@ -185,10 +187,11 @@ bool VulkanBackend::CreateDebugger()
                                VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT; 
                                // | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
                                // | VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
-    vk::DebugUtilsMessengerCreateInfoEXT DebugCreateInfo(vk::DebugUtilsMessengerCreateFlagsEXT(),
-                                                         vk::DebugUtilsMessageSeverityFlagsEXT(MessageSeverity),
-                                                         vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation,
-                                                         VkDebugCallback);
+                               
+    vk::DebugUtilsMessengerCreateInfoEXT DebugCreateInfo {};
+    DebugCreateInfo.setMessageSeverity(vk::DebugUtilsMessageSeverityFlagsEXT(MessageSeverity))
+                   .setMessageType(vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation)
+                   .setPfnUserCallback(VkDebugCallback);
     
     try
     {
