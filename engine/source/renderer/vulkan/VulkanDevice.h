@@ -30,29 +30,37 @@ class VulkanDevice
     public:
         VulkanDevice() = delete;
         VulkanDevice(VulkanContext* Context);
-        VulkanDevice(const VulkanDevice& Other) = delete;        
-        VulkanDevice& operator=(const VulkanDevice& Other) = delete;
+        VulkanDevice(const VulkanDevice&) = delete;        
+        VulkanDevice& operator=(const VulkanDevice&) = delete;
         ~VulkanDevice();
 
         bool Create(VulkanContext* Context);
         void Destroy();
 
         void QuerySwapchainSupport(const vk::PhysicalDevice& inPhysicalDevice,
-                                   VkSurfaceKHR Surface,
-                                   VulkanSwapchainSupportInfo* OutSupportInfo) const;
+                                   VkSurfaceKHR Surface);
+        bool DetectDepthFormat();
 
-        bool PhysicalDeviceMeetsRequirements(const vk::PhysicalDevice& PhysicalDeviceToCheck,
-                                             vk::SurfaceKHR Surface,
-                                             const vk::PhysicalDeviceProperties* Properties,
-                                             const vk::PhysicalDeviceFeatures* Features,
-                                             const VulkanPhysicalDeviceRequirements* Requirements,
-                                             VulkanPhysicalDeviceQueueFamilyInfo* OutQueueFamilyInfo,
-                                             VulkanSwapchainSupportInfo* OutSwapchainSupportInfo) const;
+        const vk::Format& GetDepthFormat() const { return DepthFormat; }
+        void SetDepthFormat(const vk::Format NewFormat) { DepthFormat = NewFormat; }
+
+        const VulkanSwapchainSupportInfo& GetSwapchainSupport() const { return SwapchainSupport; }
+
+        const int32_t GetGraphicsQueueIndex() const { return GraphicsQueueIndex; }
+        const int32_t GetPresentQueueIndex()  const { return PresentQueueIndex;  }
+        const int32_t GetTransferQueueIndex() const { return TransferQueueIndex; }
+        const int32_t GetComputeQueueIndex()  const { return ComputeQueueIndex;  }
 
         vk::PhysicalDevice PhysicalDevice;
         vk::Device LogicalDevice;
 
     private:
+        bool PhysicalDeviceMeetsRequirements(const vk::PhysicalDevice& PhysicalDeviceToCheck,
+                                             vk::SurfaceKHR Surface,
+                                             const vk::PhysicalDeviceProperties* Properties,
+                                             const vk::PhysicalDeviceFeatures* Features,
+                                             const VulkanPhysicalDeviceRequirements* Requirements,
+                                             VulkanPhysicalDeviceQueueFamilyInfo* OutQueueFamilyInfo);
         bool SelectPhysicalDevice();
 
         VulkanContext* Context; // Cached pointer to backend context

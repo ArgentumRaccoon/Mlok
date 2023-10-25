@@ -20,8 +20,13 @@ VulkanDevice::~VulkanDevice()
     Context = nullptr;
 }
 
-bool VulkanDevice::Create(VulkanContext* Context)
+bool VulkanDevice::Create(VulkanContext* inContext)
 {
+    if (Context != inContext)
+    {
+        Context = inContext;
+    }
+
     if (!SelectPhysicalDevice())
     {
         MlokFatal("Cannot select Vulkan Physical Device");
@@ -131,15 +136,38 @@ void VulkanDevice::Destroy()
     PresentQueueIndex  = -1;
     TransferQueueIndex = -1;
     ComputeQueueIndex  = -1;
+
+    Context = nullptr;
 }
 
 void VulkanDevice::QuerySwapchainSupport(const vk::PhysicalDevice& inPhysicalDevice,
-                                         VkSurfaceKHR Surface,
-                                         VulkanSwapchainSupportInfo* OutSupportInfo) const
+                                         VkSurfaceKHR Surface)
 {
-    OutSupportInfo->SurfaceCapabilities = inPhysicalDevice.getSurfaceCapabilitiesKHR(Surface);
-    OutSupportInfo->Formats = inPhysicalDevice.getSurfaceFormatsKHR(Surface);
-    OutSupportInfo->PresentModes = inPhysicalDevice.getSurfacePresentModesKHR(Surface);
+    SwapchainSupport.SurfaceCapabilities = inPhysicalDevice.getSurfaceCapabilitiesKHR(Surface);
+    SwapchainSupport.Formats = inPhysicalDevice.getSurfaceFormatsKHR(Surface);
+    SwapchainSupport.PresentModes = inPhysicalDevice.getSurfacePresentModesKHR(Surface);
+}
+
+bool VulkanDevice::DetectDepthFormat()
+{
+    std::vector<vk::Format> Candidates = { vk::Format::eD32Sfloat,
+                                           vk::Format::eD32SfloatS8Uint,
+                                           vk::Format::eD24UnormS8Uint };
+
+    vk::FormatFeatureFlagBits Flags = vk::FormatFeatureFlagBits::eDepthStencilAttachment;
+
+    for (auto Format : Candidates)
+    {
+        vk::FormatProperties Properties = PhysicalDevice.getFormatProperties(Format);
+        if ((Properties.linearTilingFeatures  & Flags) == Flags ||
+            (Properties.optimalTilingFeatures & Flags) == Flags)
+        {
+            DepthFormat = Format;
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool VulkanDevice::PhysicalDeviceMeetsRequirements(const vk::PhysicalDevice& PhysicalDeviceToCheck,
@@ -147,8 +175,7 @@ bool VulkanDevice::PhysicalDeviceMeetsRequirements(const vk::PhysicalDevice& Phy
                                                    const vk::PhysicalDeviceProperties* Properties,
                                                    const vk::PhysicalDeviceFeatures* Features,
                                                    const VulkanPhysicalDeviceRequirements* Requirements,
-                                                   VulkanPhysicalDeviceQueueFamilyInfo* OutQueueFamilyInfo,
-                                                   VulkanSwapchainSupportInfo* OutSwapchainSupportInfo) const
+                                                   VulkanPhysicalDeviceQueueFamilyInfo* OutQueueFamilyInfo)
 {
     OutQueueFamilyInfo->GraphicsFamilyIndex = -1;
     OutQueueFamilyInfo->PresentFamilyIndex  = -1;
@@ -219,9 +246,9 @@ bool VulkanDevice::PhysicalDeviceMeetsRequirements(const vk::PhysicalDevice& Phy
         MlokVerbose("Transfer Family Index: %i", OutQueueFamilyInfo->TransferFamilyIndex);
         MlokVerbose("Compute Family Index:  %i", OutQueueFamilyInfo->ComputeFamilyIndex);
 
-        QuerySwapchainSupport(PhysicalDeviceToCheck, Surface, OutSwapchainSupportInfo);
+        QuerySwapchainSupport(PhysicalDeviceToCheck, Surface);
 
-        if (OutSwapchainSupportInfo->Formats.empty() || OutSwapchainSupportInfo->PresentModes.empty())
+        if (SwapchainSupport.Formats.empty() || SwapchainSupport.PresentModes.empty())
         {
             MlokInfo("Required swapchain is not supported for device %s.", Properties->deviceName);
             return false;
@@ -283,8 +310,7 @@ bool VulkanDevice::SelectPhysicalDevice()
                                                                         &CandidateProperties,
                                                                         &CandidateFeatures,
                                                                         &CustomRequirements,
-                                                                        &QueueInfo,
-                                                                        &SwapchainSupport);
+                                                                        &QueueInfo);
 
         if (bDeviceMeetsRequirements)
         {

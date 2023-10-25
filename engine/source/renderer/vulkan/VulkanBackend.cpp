@@ -13,27 +13,7 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 VKAPI_ATTR VkBool32 VKAPI_CALL VkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT MessageSeverity,
                                                VkDebugUtilsMessageSeverityFlagsEXT MessageTypes,
                                                const VkDebugUtilsMessengerCallbackDataEXT* CallbackData,
-                                               void* UserData)
-{
-    switch (MessageSeverity)
-    {
-        default:
-        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-            MlokError(CallbackData->pMessage);
-            break;
-        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-            MlokWarning(CallbackData->pMessage);
-            break;
-        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-            MlokInfo(CallbackData->pMessage);
-            break;
-        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-            MlokVerbose(CallbackData->pMessage);
-            break;
-    }
-    
-    return VK_FALSE;
-}
+                                               void* UserData);
 
 bool VulkanBackend::Initialize(const std::string& AppName, const uint32_t FramebufferWidth, const uint32_t FramebufferHeight)
 {
@@ -117,11 +97,19 @@ bool VulkanBackend::Initialize(const std::string& AppName, const uint32_t Frameb
          return false;
     }
 
+    if (!CreateSwapchain())
+    {
+        return false;
+    }
+
     return true;
 }
 
 void VulkanBackend::Shutdown()
 {
+    MlokInfo("Destroying Vulkan Swapchain...");
+    Context.pSwapchain->Destroy();
+
     MlokInfo("Destroying Vulkan Device...");
     Context.pDevice->Destroy();
 
@@ -237,4 +225,38 @@ bool VulkanBackend::CreateDevice()
     MlokInfo("Vulkan Device created.");
 
     return true;
+}
+
+bool VulkanBackend::CreateSwapchain()
+{
+    MlokInfo("Creating Vulkan Swapchain...");
+    Context.pSwapchain = std::make_unique<VulkanSwapchain>(&Context, Context.FramebufferWidth, Context.FramebufferHeight);
+    MlokInfo("Vulkan Swapchain created.");
+
+    return true;
+}
+
+VKAPI_ATTR VkBool32 VKAPI_CALL VkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT MessageSeverity,
+                                               VkDebugUtilsMessageSeverityFlagsEXT MessageTypes,
+                                               const VkDebugUtilsMessengerCallbackDataEXT* CallbackData,
+                                               void* UserData)
+{
+    switch (MessageSeverity)
+    {
+        default:
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+            MlokError(CallbackData->pMessage);
+            break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+            MlokWarning(CallbackData->pMessage);
+            break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+            MlokInfo(CallbackData->pMessage);
+            break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+            MlokVerbose(CallbackData->pMessage);
+            break;
+    }
+    
+    return VK_FALSE;
 }

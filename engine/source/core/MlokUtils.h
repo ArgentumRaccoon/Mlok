@@ -42,4 +42,10 @@ namespace MlokUtils
     {
         return (float)Bytes / 1024.f / 1024.f / 1024.f;
     }
+
+    template<typename T>
+    MAPI MINLINE T Clamp(const T Value, const T Min, const T Max)
+    {
+        return (Value <= Min) ? Min : (Value >= Max) ? Max : Value;
+    }
 }
