@@ -17,12 +17,12 @@ enum class VulkanCommandBufferState
 class VulkanCommandBuffer
 {
     public:
-        VulkanCommandBuffer() = delete;
+        VulkanCommandBuffer() = default;
         VulkanCommandBuffer(VulkanContext* Context,
                             vk::CommandPool CommandPool,
                             bool bIsPrimary,
                             bool bIsSingleUse = false);
-        VulkanCommandBuffer(const VulkanCommandBuffer&) = delete;
+        VulkanCommandBuffer(const VulkanCommandBuffer&) = default;
         VulkanCommandBuffer& operator=(const VulkanCommandBuffer&) = delete;
         ~VulkanCommandBuffer();
 

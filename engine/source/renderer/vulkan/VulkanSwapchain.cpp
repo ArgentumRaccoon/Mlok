@@ -1,6 +1,7 @@
 #include "VulkanSwapchain.h"
 
 #include "VulkanContext.h"
+#include "VulkanRenderPass.h"
 
 #include "core/Logger.h"
 #include "core/MlokUtils.h"
@@ -8,7 +9,6 @@
 #include <algorithm>
 
 VulkanSwapchain::VulkanSwapchain(VulkanContext* inContext, uint32_t Width, uint32_t Height)
-    : Context { inContext }
 {
     Create(inContext, Width, Height);
 }
@@ -78,6 +78,29 @@ void VulkanSwapchain::Present(vk::Queue GraphicsQueue,
     Context->CurrentFrame = (Context->CurrentFrame + 1) % MaxFramesInFlight;
 }
 
+void VulkanSwapchain::RegenerateFramebuffers(VulkanRenderPass* RenderPass)
+{
+    if (Framebuffers.size() != ImageCount)
+    {
+        Framebuffers.resize(ImageCount);
+    }
+
+    for (size_t i = 0; i < ImageCount; ++i)
+    {
+        uint32_t AttachmentCount = 2; // per framebuffer
+        std::vector<vk::ImageView> Attachments = { Views[i], DepthAttachment->GetView() };
+        Framebuffers[i].Create(Context, RenderPass, Context->FramebufferWidth, Context->FramebufferHeight, Attachments);
+    }
+}
+
+void VulkanSwapchain::DestroyFramebuffers()
+{
+    for (auto& Framebuffer : Framebuffers)
+    {
+        Framebuffer.Destroy();
+    }
+}
+
 void VulkanSwapchain::CreateInternal(VulkanContext* inContext, uint32_t Width, uint32_t Height)
 {
     if (Context != inContext)
@@ -124,7 +147,7 @@ void VulkanSwapchain::CreateInternal(VulkanContext* inContext, uint32_t Width, u
     Width  = MlokUtils::Clamp(Width, Min.width, Max.width);
     Height = MlokUtils::Clamp(Height, Min.height, Max.height);
 
-    uint32_t ImageCount = Context->pDevice->GetSwapchainSupport().SurfaceCapabilities.minImageCount + 1;
+    ImageCount = Context->pDevice->GetSwapchainSupport().SurfaceCapabilities.minImageCount + 1;
     const uint32_t SurfaceMaxImageCount = Context->pDevice->GetSwapchainSupport().SurfaceCapabilities.maxImageCount;
     if (SurfaceMaxImageCount > 0 && ImageCount > SurfaceMaxImageCount)
     {

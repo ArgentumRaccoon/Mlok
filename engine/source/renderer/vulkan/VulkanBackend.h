@@ -29,4 +29,9 @@ class VulkanBackend : public RendererBackend
         bool CreateSurface();
         bool CreateDevice();
         bool CreateSwapchain();
+        bool CreateMainRenderPass();
+        void CreateCommandBuffers();
+        void CreateSyncObjects();
+
+        
 };

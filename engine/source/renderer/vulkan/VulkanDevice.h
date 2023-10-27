@@ -51,6 +51,8 @@ class VulkanDevice
         const int32_t GetTransferQueueIndex() const { return TransferQueueIndex; }
         const int32_t GetComputeQueueIndex()  const { return ComputeQueueIndex;  }
 
+        vk::CommandPool& GetGraphicsCommandPool() { return GraphicsCommandPool; }
+
         vk::PhysicalDevice PhysicalDevice;
         vk::Device LogicalDevice;
 

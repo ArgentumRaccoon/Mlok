@@ -102,11 +102,48 @@ bool VulkanBackend::Initialize(const std::string& AppName, const uint32_t Frameb
         return false;
     }
 
+    if (!CreateMainRenderPass())
+    {
+        return false;
+    }
+
+    Context.pSwapchain->RegenerateFramebuffers(Context.pMainRenderPass.get());
+
+    CreateCommandBuffers();
+
+    CreateSyncObjects();
+
     return true;
 }
 
 void VulkanBackend::Shutdown()
 {
+    Context.pDevice->LogicalDevice.waitIdle();
+
+    MlokInfo("Destroying Vulkan Sync Objects...");
+    auto DestroySemaphore = [&](vk::Semaphore& SemaphoreToDestroy) {
+        if (SemaphoreToDestroy) Context.pDevice->LogicalDevice.destroySemaphore(SemaphoreToDestroy, Context.Allocator);
+    };    
+    std::for_each(Context.ImageAvailableSemaphores.begin(),
+                  Context.ImageAvailableSemaphores.end(),
+                  DestroySemaphore);
+    Context.ImageAvailableSemaphores.clear();    
+    std::for_each(Context.QueueCompleteSemaphores.begin(),
+                  Context.QueueCompleteSemaphores.end(),
+                  DestroySemaphore);
+    Context.QueueCompleteSemaphores.clear();
+    Context.InFlightFences.clear();
+    Context.ImagesInFlight.clear();
+
+    MlokInfo("Freeing Vulkan CommandBuffers...");
+    Context.GraphicsCommandBuffers.clear();
+
+    MlokInfo("Destroying Vulkan Framebuffers...");
+    Context.pSwapchain->DestroyFramebuffers();
+
+    MlokInfo("Destroying Main Render Pass...");
+    Context.pMainRenderPass->Destroy();
+
     MlokInfo("Destroying Vulkan Swapchain...");
     Context.pSwapchain->Destroy();
 
@@ -234,6 +271,56 @@ bool VulkanBackend::CreateSwapchain()
     MlokInfo("Vulkan Swapchain created.");
 
     return true;
+}
+
+bool VulkanBackend::CreateMainRenderPass()
+{
+    MlokInfo("Creating Main Render Pass...");
+    Context.pMainRenderPass = std::make_unique<VulkanRenderPass>(&Context,
+                                                                 0.f, 0.f, Context.FramebufferWidth, Context.FramebufferHeight,
+                                                                 0.1f, 0.1f, 0.25f, 1.f,
+                                                                 1.f, 0);
+    MlokInfo("Main Render Pass created.");
+
+    return true;
+}
+
+void VulkanBackend::CreateCommandBuffers()
+{
+    if (Context.GraphicsCommandBuffers.empty())
+    {
+        Context.GraphicsCommandBuffers.resize(Context.pSwapchain->GetImageCount());
+    }
+
+    for (auto& CommandBuffer : Context.GraphicsCommandBuffers)
+    {
+        CommandBuffer.Free();
+        Platform::PlatformZeroMemory(&CommandBuffer, sizeof(VulkanCommandBuffer));
+        CommandBuffer.Allocate(&Context, Context.pDevice->GetGraphicsCommandPool(), true);
+    }
+}
+
+void VulkanBackend::CreateSyncObjects()
+{
+    Context.ImageAvailableSemaphores.clear();
+    Context.QueueCompleteSemaphores.clear();
+    Context.InFlightFences.clear();
+    Context.ImagesInFlight.clear();
+
+    Context.ImageAvailableSemaphores.resize(Context.pSwapchain->GetMaxFramesInFlight());
+    Context.QueueCompleteSemaphores.resize(Context.pSwapchain->GetMaxFramesInFlight());
+    Context.InFlightFences.resize(Context.pSwapchain->GetMaxFramesInFlight());
+
+    for (size_t i = 0; i < Context.pSwapchain->GetMaxFramesInFlight(); ++i)
+    {
+        vk::SemaphoreCreateInfo SemaphoreCreateInfo {};
+        Context.ImageAvailableSemaphores[i] = Context.pDevice->LogicalDevice.createSemaphore(SemaphoreCreateInfo, Context.Allocator);
+        Context.QueueCompleteSemaphores[i] = Context.pDevice->LogicalDevice.createSemaphore(SemaphoreCreateInfo, Context.Allocator);
+
+        Context.InFlightFences[i].Create(&Context, true);// .push_back(VulkanFence(&Context, true));
+    }
+
+    Context.ImagesInFlight.resize(Context.pSwapchain->GetImageCount(), nullptr);
 }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL VkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT MessageSeverity,

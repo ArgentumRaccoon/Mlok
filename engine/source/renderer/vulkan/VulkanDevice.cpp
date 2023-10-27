@@ -110,7 +110,7 @@ void VulkanDevice::Destroy()
         LogicalDevice.destroyCommandPool(GraphicsCommandPool, Context->Allocator);
     }
 
-    MlokInfo("Destroyin Logical Device...");
+    MlokInfo("Destroying Logical Device...");
     if (LogicalDevice)
     {
         LogicalDevice.destroy(Context->Allocator);

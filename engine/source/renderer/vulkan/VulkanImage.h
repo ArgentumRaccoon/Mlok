@@ -32,6 +32,8 @@ class VulkanImage
         void CreateImageView();
         
         void Destroy();
+
+        vk::ImageView& GetView() { return View; }
     
     private:
         VulkanContext* Context; // Cached pointer to backend context

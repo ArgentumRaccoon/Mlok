@@ -8,11 +8,8 @@ VulkanFramebuffer::VulkanFramebuffer(VulkanContext* inContext,
                                      uint32_t Width,
                                      uint32_t Height,
                                      std::vector<vk::ImageView>& inAttachments)
-    : Context { inContext }
-    , Attachments { inAttachments }
-    , RenderPass { inRenderPass }
 {
-    Create(inContext, Width, Height);
+    Create(inContext, RenderPass, Width, Height, Attachments);
 }
 
 VulkanFramebuffer::~VulkanFramebuffer()
@@ -21,13 +18,14 @@ VulkanFramebuffer::~VulkanFramebuffer()
 }
 
 void VulkanFramebuffer::Create(VulkanContext* inContext,
+                               VulkanRenderPass* inRenderPass,
                                uint32_t Width,
-                               uint32_t Height)
+                               uint32_t Height,
+                               std::vector<vk::ImageView>& inAttachments)
 {
-    if (Context != inContext)
-    {
-        Context = inContext;
-    }
+    Context = inContext;
+    Attachments = inAttachments;
+    RenderPass = inRenderPass;
 
     vk::FramebufferCreateInfo CreateInfo {};
     CreateInfo.setRenderPass(*RenderPass->Get())
@@ -37,6 +35,18 @@ void VulkanFramebuffer::Create(VulkanContext* inContext,
               .setLayers(1);
 
     Handle = Context->pDevice->LogicalDevice.createFramebuffer(CreateInfo, Context->Allocator);
+}
+
+void VulkanFramebuffer::Recreate(VulkanContext* inContext,
+                                 VulkanRenderPass* inRenderPass,
+                                 uint32_t Width,
+                                 uint32_t Height,
+                                 std::vector<vk::ImageView>& inAttachments)
+{
+    VulkanFramebuffer(inContext,
+                      inRenderPass,
+                      Width, Height,
+                      inAttachments);
 }
 
 void VulkanFramebuffer::Destroy()

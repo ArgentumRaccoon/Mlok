@@ -3,11 +3,12 @@
 #include "VulkanTypes.inl"
 
 #include "VulkanImage.h"
+#include "VulkanFramebuffer.h"
 
 #include <memory>
 
 class VulkanContext;
-class VulkanFramebuffer;
+class VulkanRenderPass;
 
 class VulkanSwapchain
 {
@@ -33,7 +34,13 @@ class VulkanSwapchain
                      vk::Semaphore RenderCompleteSemaphore,
                      uint32_t PresentImageIndex);
 
+        void RegenerateFramebuffers(VulkanRenderPass* RenderPass);
+
+        void DestroyFramebuffers();
+
         const vk::SurfaceFormatKHR& GetImageFormat() const { return ImageFormat; }
+        const uint32_t GetImageCount() const { return ImageCount; }
+        const uint8_t GetMaxFramesInFlight() const { return MaxFramesInFlight; }
 
     private:
         VulkanContext* Context; // Cached pointer to backend context
@@ -47,7 +54,8 @@ class VulkanSwapchain
         std::vector<vk::ImageView> Views;
 
         std::unique_ptr<VulkanImage> DepthAttachment;
-        VulkanFramebuffer* Framebuffers;
+
+        std::vector<VulkanFramebuffer> Framebuffers;
 
         void CreateInternal(VulkanContext* inContext, uint32_t Width, uint32_t Height);
         void DestroyInternal();
