@@ -35,7 +35,13 @@ class VulkanContext
         uint32_t FramebufferWidth;
         uint32_t FramebufferHeight;
 
+        uint64_t FramebufferSizeGeneration;
+        uint64_t FramebufferSizeLastGeneration;
+
         uint32_t CurrentFrame;
+        uint32_t ImageIndex;
+
+        bool bRecreatingSwapchain;
 
         virtual int32_t FindMemoryIndex(uint32_t TypeFilter, vk::MemoryPropertyFlags PropertyFlags);
 };

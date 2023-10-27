@@ -121,3 +121,23 @@ void VulkanRenderPass::End(VulkanCommandBuffer* CommandBuffer)
     CommandBuffer->Get()->endRenderPass();
     CommandBuffer->UpdateRecording();
 }
+
+void VulkanRenderPass::SetWidth(const float inWidth)
+{
+    W = inWidth;
+}
+
+void VulkanRenderPass::SetHeight(const float inHeight)
+{
+    H = inHeight;
+}
+
+void VulkanRenderPass::SetX(const float inX)
+{
+    X = inX;
+}
+
+void VulkanRenderPass::SetY(const float inY)
+{
+    Y = inY;
+}

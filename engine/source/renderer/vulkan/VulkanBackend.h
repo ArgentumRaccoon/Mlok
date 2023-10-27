@@ -33,5 +33,5 @@ class VulkanBackend : public RendererBackend
         void CreateCommandBuffers();
         void CreateSyncObjects();
 
-        
+        bool RecreateSwapchain();
 };

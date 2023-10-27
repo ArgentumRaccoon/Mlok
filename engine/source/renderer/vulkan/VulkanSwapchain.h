@@ -42,6 +42,8 @@ class VulkanSwapchain
         const uint32_t GetImageCount() const { return ImageCount; }
         const uint8_t GetMaxFramesInFlight() const { return MaxFramesInFlight; }
 
+        VulkanFramebuffer& GetFramebuffer(const size_t Id) { return Framebuffers[Id]; }
+
     private:
         VulkanContext* Context; // Cached pointer to backend context
 

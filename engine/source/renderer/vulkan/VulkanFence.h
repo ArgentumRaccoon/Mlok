@@ -15,6 +15,8 @@ class VulkanFence
 
         VulkanFence& operator=(const VulkanFence&) = delete;
 
+        vk::Fence* Get() { return &Handle; }
+
         void Create(VulkanContext* Context, bool bCreateSignaled);
         void Destroy();
 

@@ -67,7 +67,8 @@
         "xloctime": "cpp",
         "array": "cpp",
         "span": "cpp",
-        "functional": "cpp"
+        "functional": "cpp",
+        "*.tcc": "cpp"
     },
     "workbench.editor.enablePreviewFromCodeNavigation": false
 }

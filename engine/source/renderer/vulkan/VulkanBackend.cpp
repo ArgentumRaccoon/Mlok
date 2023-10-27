@@ -6,7 +6,7 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 #include "core/MlokUtils.h"
 #include "core/Asserts.h"
 
-#include "VulkanDevice.h"
+#include "VulkanUtils.h"
 
 #include <memory>
 
@@ -172,12 +172,119 @@ void VulkanBackend::OnResized(uint16_t NewWidth, uint16_t Height)
 
 bool VulkanBackend::BeginFrame(float DeltaTime)
 {
+    if (Context.bRecreatingSwapchain)
+    {
+        try
+        {
+            Context.pDevice->LogicalDevice.waitIdle();
+        }
+        catch(const vk::SystemError& err)
+        {
+            MlokFatal("VulkanRendererBackendBeginFrame vkDeviceWaitIdle (1) failed: %s", err.what());
+            return false;    
+        }
+        catch(...)
+        {
+            MlokFatal("VulkanRendererBackendBeginFrame vkDeviceWaitIdle (2) failed: Unknown Error");
+            return false;
+        }
+        
+        MlokInfo("Recreating Swapchain...");
+
+        if (!RecreateSwapchain())
+        {
+            return false;
+        }
+
+        MlokInfo("Resized");
+        return true;
+    }
+
+    if (!Context.InFlightFences[Context.CurrentFrame].Wait(UINT64_MAX))
+    {
+        MlokWarning("In flight fence wait failure");
+        return false;
+    }
+
+    if (!Context.pSwapchain->AcquireNextImageIndex(UINT64_MAX, 
+                                                  Context.ImageAvailableSemaphores[Context.CurrentFrame], 
+                                                  VK_NULL_HANDLE, 
+                                                  &Context.ImageIndex))
+    {
+        return false;
+    }
+
+    auto& CommandBuffer = Context.GraphicsCommandBuffers[Context.ImageIndex];
+    CommandBuffer.Reset();
+    CommandBuffer.Begin(false, false, false);
+
+    vk::Viewport Viewport {};
+    Viewport.setX(0.f)
+            .setY(static_cast<float>(Context.FramebufferHeight))
+            .setWidth(static_cast<float>(Context.FramebufferWidth))
+            .setHeight(-static_cast<float>(Context.FramebufferHeight))
+            .setMinDepth(0.f)
+            .setMaxDepth(1.f);
+    
+    vk::Rect2D Scissor {};
+    Scissor.setOffset({ 0, 0 })
+           .setExtent({ Context.FramebufferWidth, Context.FramebufferHeight });
+
+    CommandBuffer.Get()->setViewport(0, 1, &Viewport);
+    CommandBuffer.Get()->setScissor(0, 1, &Scissor);
+
+    Context.pMainRenderPass->SetWidth(Context.FramebufferWidth);
+    Context.pMainRenderPass->SetHeight(Context.FramebufferHeight);
+
+    Context.pMainRenderPass->Begin(&CommandBuffer, *Context.pSwapchain->GetFramebuffer(Context.ImageIndex).Get());
+
     return true;
 }
 
 bool VulkanBackend::EndFrame(float DeltaTime)
 {
+    auto& CommandBuffer = Context.GraphicsCommandBuffers[Context.ImageIndex];
+
+    Context.pMainRenderPass->End(&CommandBuffer);
+
+    CommandBuffer.End();
+
+    if (Context.ImagesInFlight[Context.ImageIndex])
+    {
+        Context.ImagesInFlight[Context.ImageIndex]->Wait(UINT64_MAX);
+    }
+
+    Context.ImagesInFlight[Context.ImageIndex] = &Context.InFlightFences[Context.CurrentFrame];
+
+    Context.InFlightFences[Context.CurrentFrame].Reset();
+
+    std::vector<vk::PipelineStageFlags> PipelineStageFlags = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
+
+    vk::SubmitInfo SubmitInfo {};
+    SubmitInfo.setCommandBufferCount(1)
+              .setPCommandBuffers(CommandBuffer.Get())
+              .setSignalSemaphoreCount(1)
+              .setPSignalSemaphores(&Context.QueueCompleteSemaphores[Context.CurrentFrame])
+              .setWaitSemaphoreCount(1)
+              .setPWaitSemaphores(&Context.ImageAvailableSemaphores[Context.CurrentFrame])
+              .setWaitDstStageMask(PipelineStageFlags);
+
+    vk::Result SubmitResult = Context.pDevice->GetGraphicsQueue().submit(1, &SubmitInfo, *Context.InFlightFences[Context.CurrentFrame].Get());
+    if (SubmitResult != vk::Result::eSuccess)
+    {
+        MlokError("Failed to submit Graphics Queue: %s", VulkanUtils::VulkanResultString(SubmitResult, true).c_str());
+        return false;
+    }
+
+    CommandBuffer.UpdateSubmitted();
+
+    Context.pSwapchain->Present(Context.pDevice->GetGraphicsQueue(),
+                                Context.pDevice->GetPresentQueue(),
+                                Context.QueueCompleteSemaphores[Context.CurrentFrame],
+                                Context.ImageIndex);
+
     FrameCount++;
+
     return true;
 }
 
@@ -321,6 +428,58 @@ void VulkanBackend::CreateSyncObjects()
     }
 
     Context.ImagesInFlight.resize(Context.pSwapchain->GetImageCount(), nullptr);
+}
+
+bool VulkanBackend::RecreateSwapchain()
+{
+    if (Context.bRecreatingSwapchain)
+    {
+        MlokDebug("RecreateSwapchain called during continuous swapchain recreation.");
+        return false;
+    }
+
+    if (Context.FramebufferWidth == 0 || Context.FramebufferHeight == 0)
+    {
+        MlokDebug("RecreateSwapchain called for window dimension < 1.");
+        return false;
+    }
+
+    Context.bRecreatingSwapchain = true;
+
+    Context.pDevice->LogicalDevice.waitIdle();
+
+    std::for_each(Context.ImagesInFlight.begin(),
+                  Context.ImagesInFlight.end(),
+                  [&](VulkanFence* ImageFence) { ImageFence = nullptr; });
+
+    Context.pSwapchain->Recreate(Context.FramebufferWidth, Context.FramebufferHeight);
+
+    Context.FramebufferWidth  = CachedFramebufferWidth;
+    Context.FramebufferHeight = CachedFramebufferHeight;
+    Context.pMainRenderPass->SetWidth(static_cast<float>(Context.FramebufferWidth));
+    Context.pMainRenderPass->SetHeight(static_cast<float>(Context.FramebufferHeight));
+    CachedFramebufferWidth  = 0;
+    CachedFramebufferHeight = 0;
+
+    Context.FramebufferSizeLastGeneration = Context.FramebufferSizeGeneration;
+
+    std::for_each(Context.GraphicsCommandBuffers.begin(),
+                  Context.GraphicsCommandBuffers.end(),
+                  [&](VulkanCommandBuffer& CB) { CB.Free(); });
+    Context.pSwapchain->DestroyFramebuffers();
+
+    Context.pMainRenderPass->SetX(0);
+    Context.pMainRenderPass->SetY(0);
+    Context.pMainRenderPass->SetWidth(Context.FramebufferWidth);
+    Context.pMainRenderPass->SetHeight(Context.FramebufferHeight);
+
+    Context.pSwapchain->RegenerateFramebuffers(Context.pMainRenderPass.get());
+
+    CreateCommandBuffers();
+
+    Context.bRecreatingSwapchain = false;
+
+    return true;
 }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL VkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT MessageSeverity,

@@ -37,6 +37,12 @@ class VulkanRenderPass
                    vk::Framebuffer Framebuffer);
 
         void End(VulkanCommandBuffer* CommandBuffer);
+
+        void SetWidth(const float inWidth);
+        void SetHeight(const float inHeight);
+
+        void SetX(const float inX);
+        void SetY(const float inY);
     
     private:
         VulkanContext* Context; // Cached pointer to backend context

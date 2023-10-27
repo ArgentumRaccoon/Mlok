@@ -72,7 +72,7 @@ std::ostream& operator<<(std::ostream& os, const LogLevel& Level);
 
 
 #define MlokFatal(Message, ...) (Logger::Get()->MFatal(Message, ##__VA_ARGS__))
-#define MlokError(Message, ...) (Logger::Get()->MFatal(Message, ##__VA_ARGS__))
+#define MlokError(Message, ...) (Logger::Get()->MError(Message, ##__VA_ARGS__))
 
 #ifdef LOG_WARNING_ENABLED
     #define MlokWarning(Message, ...) (Logger::Get()->MWarning(Message, ##__VA_ARGS__))

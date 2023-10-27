@@ -6,6 +6,6 @@
 class VulkanUtils
 {
     public:
-        static bool ResultIsSuccess(VkResult Result);
-        static std::string VulkanResultString(VkResult Result, bool bGetExtended);
+        static bool ResultIsSuccess(vk::Result Result);
+        static std::string VulkanResultString(vk::Result Result, bool bGetExtended);
 };

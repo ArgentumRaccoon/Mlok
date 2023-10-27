@@ -95,7 +95,8 @@ bool VulkanDevice::Create(VulkanContext* inContext)
     // ComputeQueue  = LogicalDevice.getQueue(ComputeQueueIndex,  0);
 
     vk::CommandPoolCreateInfo PoolCreateInfo {};
-    PoolCreateInfo.setQueueFamilyIndex(GraphicsQueueIndex);
+    PoolCreateInfo.setQueueFamilyIndex(GraphicsQueueIndex)
+                  .setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
     GraphicsCommandPool = LogicalDevice.createCommandPool(PoolCreateInfo, Context->Allocator);
     MlokInfo("Graphics Command Pool created.");
 
