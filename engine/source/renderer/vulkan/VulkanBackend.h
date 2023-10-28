@@ -10,7 +10,7 @@ class VulkanBackend : public RendererBackend
         virtual bool Initialize(const std::string& AppName, const uint32_t FramebufferWidth, const uint32_t FramebufferHeight) override;
         virtual void Shutdown() override;
 
-        virtual void OnResized(uint16_t NewWidth, uint16_t Height) override;
+        virtual void OnResized(uint16_t NewWidth, uint16_t NewHeight) override;
         virtual bool BeginFrame(float DeltaTime) override;
         virtual bool EndFrame(float DeltaTime) override;
 

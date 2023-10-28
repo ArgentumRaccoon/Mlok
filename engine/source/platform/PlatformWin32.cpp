@@ -233,13 +233,24 @@ LRESULT Platform::Win32ProcessMessage(HWND hWnd, uint32_t Message, WPARAM wParam
         case WM_CLOSE:
             {
                 EventContext Data {};
-                EventSystem::Get()->FireEvent(static_cast<uint16_t>(SystemEventCode::EVENT_CODE_APPLICATION_QUIT), nullptr, Data);
+                EventSystem::Get()->FireEvent(EVENT_CODE_APPLICATION_QUIT, nullptr, Data);
                 return true;
             }
         case WM_DESTROY:
             PostQuitMessage(0);
             return 0;
         case WM_SIZE:
+            {
+                RECT Rect;
+                GetClientRect(hWnd, &Rect);
+                uint16_t Width  = Rect.right - Rect.left;
+                uint16_t Height = Rect.bottom - Rect.top;
+
+                EventContext Context {};
+                Context.Data.u16[0] = Width;
+                Context.Data.u16[1] = Height;
+                EventSystem::Get()->FireEvent(EVENT_CODE_RESIZED, nullptr, Context);
+            }
             break;
         case WM_KEYDOWN:
         case WM_SYSKEYDOWN:

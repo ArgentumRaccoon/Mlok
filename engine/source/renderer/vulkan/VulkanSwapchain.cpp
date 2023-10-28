@@ -68,7 +68,7 @@ void VulkanSwapchain::Present(vk::Queue GraphicsQueue,
                .setSwapchainCount(1)
                .setPSwapchains(&Handle)
                .setPImageIndices(&PresentImageIndex);
-    
+
     vk::Result Result = PresentQueue.presentKHR(PresentInfo);
     if (Result == vk::Result::eErrorOutOfDateKHR || Result == vk::Result::eSuboptimalKHR)
     {
@@ -180,12 +180,12 @@ void VulkanSwapchain::CreateInternal(VulkanContext* inContext, uint32_t Width, u
         CreateInfo.setImageSharingMode(vk::SharingMode::eExclusive);
     }
 
-    Handle = Context->pDevice->LogicalDevice.createSwapchainKHR(CreateInfo, Context->Allocator);
+    Handle = Context->pDevice->LogicalDevice.createSwapchainKHR(CreateInfo, Context->Allocator).value;
 
     Context->CurrentFrame = 0;
     ImageCount = 0;
 
-    Images = Context->pDevice->LogicalDevice.getSwapchainImagesKHR(Handle);
+    Images = Context->pDevice->LogicalDevice.getSwapchainImagesKHR(Handle).value;
     ImageCount = Images.size();
     
     if (Views.empty())
@@ -209,7 +209,7 @@ void VulkanSwapchain::CreateInternal(VulkanContext* inContext, uint32_t Width, u
                 .setFormat(ImageFormat.format)
                 .setSubresourceRange(SubresourceRange);
 
-        Views[i] = Context->pDevice->LogicalDevice.createImageView(ViewInfo, Context->Allocator);
+        Views[i] = Context->pDevice->LogicalDevice.createImageView(ViewInfo, Context->Allocator).value;
     }
 
     if (!Context->pDevice->DetectDepthFormat())

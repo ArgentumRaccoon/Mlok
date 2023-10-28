@@ -5,6 +5,7 @@
 #include "platform/Platform.h"
 
 #include "VulkanContext.h"
+#include "VulkanUtils.h"
 
 #include <algorithm>
 
@@ -73,21 +74,17 @@ bool VulkanDevice::Create(VulkanContext* inContext)
               .setPEnabledExtensionNames(EnabledExtensions)
               .setPEnabledFeatures(&Features);
 
-    try
     {
-        LogicalDevice = PhysicalDevice.createDevice(CreateInfo, Context->Allocator);
+        const auto& CreateResult = PhysicalDevice.createDevice(CreateInfo, Context->Allocator);
+        if (!VulkanUtils::ResultIsSuccess(CreateResult.result))
+        {
+            MlokFatal("Failed to create Vulkan Logical Device: %s", VulkanUtils::VulkanResultString(CreateResult.result, true).c_str());
+            return false;
+        }
+
+        LogicalDevice = CreateResult.value;
+        MlokInfo("Logical Device created");
     }
-    catch(const vk::SystemError& err)
-    {
-        MlokFatal("Failed to create Vulkan Device: %s", err.what());
-        return false;    
-    }
-    catch(...)
-    {
-        MlokFatal("Failed to create Vulkan Device: Unknown Error");
-        return false;
-    }
-    MlokInfo("Logical Device created");
 
     GraphicsQueue = LogicalDevice.getQueue(GraphicsQueueIndex, 0);
     PresentQueue  = LogicalDevice.getQueue(PresentQueueIndex,  0);
@@ -97,8 +94,18 @@ bool VulkanDevice::Create(VulkanContext* inContext)
     vk::CommandPoolCreateInfo PoolCreateInfo {};
     PoolCreateInfo.setQueueFamilyIndex(GraphicsQueueIndex)
                   .setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
-    GraphicsCommandPool = LogicalDevice.createCommandPool(PoolCreateInfo, Context->Allocator);
-    MlokInfo("Graphics Command Pool created.");
+    
+    {
+        const auto& CreateResult = LogicalDevice.createCommandPool(PoolCreateInfo, Context->Allocator);
+        if (!VulkanUtils::ResultIsSuccess(CreateResult.result))
+        {
+            MlokFatal("Failed to create Graphics Command Pool: %s", VulkanUtils::VulkanResultString(CreateResult.result, true).c_str());
+            return false;
+        }
+
+        GraphicsCommandPool = CreateResult.value;
+        MlokInfo("Graphics Command Pool created.");
+    }
 
     return true;
 }
@@ -144,9 +151,9 @@ void VulkanDevice::Destroy()
 void VulkanDevice::QuerySwapchainSupport(const vk::PhysicalDevice& inPhysicalDevice,
                                          VkSurfaceKHR Surface)
 {
-    SwapchainSupport.SurfaceCapabilities = inPhysicalDevice.getSurfaceCapabilitiesKHR(Surface);
-    SwapchainSupport.Formats = inPhysicalDevice.getSurfaceFormatsKHR(Surface);
-    SwapchainSupport.PresentModes = inPhysicalDevice.getSurfacePresentModesKHR(Surface);
+    SwapchainSupport.SurfaceCapabilities = inPhysicalDevice.getSurfaceCapabilitiesKHR(Surface).value;
+    SwapchainSupport.Formats = inPhysicalDevice.getSurfaceFormatsKHR(Surface).value;
+    SwapchainSupport.PresentModes = inPhysicalDevice.getSurfacePresentModesKHR(Surface).value;
 }
 
 bool VulkanDevice::DetectDepthFormat()
@@ -223,7 +230,7 @@ bool VulkanDevice::PhysicalDeviceMeetsRequirements(const vk::PhysicalDevice& Phy
             }
         }
 
-        if (PhysicalDeviceToCheck.getSurfaceSupportKHR((uint32_t)i, Surface))
+        if (PhysicalDeviceToCheck.getSurfaceSupportKHR((uint32_t)i, Surface).value)
         {
             OutQueueFamilyInfo->PresentFamilyIndex = (uint32_t)i;
         }
@@ -257,7 +264,7 @@ bool VulkanDevice::PhysicalDeviceMeetsRequirements(const vk::PhysicalDevice& Phy
 
         if (!Requirements->DeviceExtensionNames.empty())
         {
-            std::vector<vk::ExtensionProperties> AvailableExtensions = PhysicalDeviceToCheck.enumerateDeviceExtensionProperties();
+            std::vector<vk::ExtensionProperties> AvailableExtensions = PhysicalDeviceToCheck.enumerateDeviceExtensionProperties().value;
             if (!AvailableExtensions.empty())
             {
                 for (auto& Required : Requirements->DeviceExtensionNames)
@@ -288,7 +295,7 @@ bool VulkanDevice::PhysicalDeviceMeetsRequirements(const vk::PhysicalDevice& Phy
 
 bool VulkanDevice::SelectPhysicalDevice()
 {
-    for (auto& CandidatePhysicalDevice : Context->pInstance->enumeratePhysicalDevices())
+    for (auto& CandidatePhysicalDevice : Context->pInstance->enumeratePhysicalDevices().value)
     {
         vk::PhysicalDeviceProperties CandidateProperties = CandidatePhysicalDevice.getProperties();
         vk::PhysicalDeviceFeatures CandidateFeatures = CandidatePhysicalDevice.getFeatures();

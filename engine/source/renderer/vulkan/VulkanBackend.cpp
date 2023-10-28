@@ -47,7 +47,7 @@ bool VulkanBackend::Initialize(const std::string& AppName, const uint32_t Frameb
 #ifndef NDEBUG
     const char* ValidationLayerName = "VK_LAYER_KHRONOS_validation";
     RequiredValidationLayerNames.push_back(ValidationLayerName);
-    std::vector<vk::LayerProperties> LayerProperties = vk::enumerateInstanceLayerProperties();
+    std::vector<vk::LayerProperties> LayerProperties = vk::enumerateInstanceLayerProperties().value;
     
     // Check if Required Layers are presented
     for (const auto& ReqLayer : RequiredValidationLayerNames)
@@ -165,31 +165,38 @@ void VulkanBackend::Shutdown()
     Context.pInstance->destroy(Context.Allocator);
 }
 
-void VulkanBackend::OnResized(uint16_t NewWidth, uint16_t Height)
+void VulkanBackend::OnResized(uint16_t NewWidth, uint16_t NewHeight)
 {
+    CachedFramebufferWidth  = NewWidth;
+    CachedFramebufferHeight = NewHeight;
+    Context.FramebufferSizeGeneration++;
 
+    MlokInfo("Vulkan Renderer Backend resized event: w/h/g\n: %i/%i/%llu", NewWidth, NewHeight, Context.FramebufferSizeGeneration);
 }
 
 bool VulkanBackend::BeginFrame(float DeltaTime)
 {
     if (Context.bRecreatingSwapchain)
     {
-        try
+        vk::Result Result = Context.pDevice->LogicalDevice.waitIdle();
+        if (!VulkanUtils::ResultIsSuccess(Result))
         {
-            Context.pDevice->LogicalDevice.waitIdle();
-        }
-        catch(const vk::SystemError& err)
-        {
-            MlokFatal("VulkanRendererBackendBeginFrame vkDeviceWaitIdle (1) failed: %s", err.what());
+            MlokFatal("Vulkan Backend Device Wait Idle (1) failed: %s", VulkanUtils::VulkanResultString(Result, true).c_str());
             return false;    
-        }
-        catch(...)
-        {
-            MlokFatal("VulkanRendererBackendBeginFrame vkDeviceWaitIdle (2) failed: Unknown Error");
-            return false;
         }
         
         MlokInfo("Recreating Swapchain...");
+        return false;
+    }
+
+    if (Context.FramebufferSizeGeneration != Context.FramebufferSizeLastGeneration)
+    {
+        vk::Result Result = Context.pDevice->LogicalDevice.waitIdle();
+        if (!VulkanUtils::ResultIsSuccess(Result))
+        {
+            MlokFatal("Vulkan Backend Device Wait Idle (2) failed: %s", VulkanUtils::VulkanResultString(Result, true).c_str());
+            return false;    
+        }
 
         if (!RecreateSwapchain())
         {
@@ -197,7 +204,7 @@ bool VulkanBackend::BeginFrame(float DeltaTime)
         }
 
         MlokInfo("Resized");
-        return true;
+        return false;
     }
 
     if (!Context.InFlightFences[Context.CurrentFrame].Wait(UINT64_MAX))
@@ -290,20 +297,7 @@ bool VulkanBackend::EndFrame(float DeltaTime)
 
 bool VulkanBackend::CreateInstance(const vk::InstanceCreateInfo& CreateInfo)
 {
-    try
-    {
-        Context.pInstance = std::make_unique<vk::Instance>(vk::createInstance(CreateInfo, Context.Allocator));
-    }
-    catch(const vk::SystemError& err)
-    {
-        MlokFatal("Failed to create Vulkan Instance: %s", err.what());
-        return false;    
-    }
-    catch(...)
-    {
-        MlokFatal("Failed to create Vulkan Instance: Unknown Error");
-        return false;
-    }
+    Context.pInstance = std::make_unique<vk::Instance>(vk::createInstance(CreateInfo, Context.Allocator).value);
     MlokInfo("Vulkan Instance created.");
 
     VULKAN_HPP_DEFAULT_DISPATCHER.init(*Context.pInstance);
@@ -325,21 +319,15 @@ bool VulkanBackend::CreateDebugger()
                    .setMessageType(vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation)
                    .setPfnUserCallback(VkDebugCallback);
     
-    try
+    const auto& CreateResult = Context.pInstance->createDebugUtilsMessengerEXT(DebugCreateInfo, Context.Allocator);
+    
+    if (!VulkanUtils::ResultIsSuccess(CreateResult.result))
     {
-        Context.DebugMessenger = Context.pInstance->createDebugUtilsMessengerEXT(DebugCreateInfo, Context.Allocator);;
-    }
-    catch(const vk::SystemError& err)
-    {
-        MlokFatal("Failed to create Vulkan Debug Messenger: %s", err.what());
-        return false;    
-    }
-    catch(...)
-    {
-        MlokFatal("Failed to create Vulkan Debug Messenger: Unknown Error");
+        MlokFatal("Failed to create Vulkan Debugger: %s", VulkanUtils::VulkanResultString(CreateResult.result, true).c_str());
         return false;
     }
 
+    Context.DebugMessenger = CreateResult.value;
     MlokInfo("Vulkan Debugger created.");
 
     return true;
@@ -421,8 +409,8 @@ void VulkanBackend::CreateSyncObjects()
     for (size_t i = 0; i < Context.pSwapchain->GetMaxFramesInFlight(); ++i)
     {
         vk::SemaphoreCreateInfo SemaphoreCreateInfo {};
-        Context.ImageAvailableSemaphores[i] = Context.pDevice->LogicalDevice.createSemaphore(SemaphoreCreateInfo, Context.Allocator);
-        Context.QueueCompleteSemaphores[i] = Context.pDevice->LogicalDevice.createSemaphore(SemaphoreCreateInfo, Context.Allocator);
+        Context.ImageAvailableSemaphores[i] = Context.pDevice->LogicalDevice.createSemaphore(SemaphoreCreateInfo, Context.Allocator).value;
+        Context.QueueCompleteSemaphores[i] = Context.pDevice->LogicalDevice.createSemaphore(SemaphoreCreateInfo, Context.Allocator).value;
 
         Context.InFlightFences[i].Create(&Context, true);// .push_back(VulkanFence(&Context, true));
     }

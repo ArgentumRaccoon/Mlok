@@ -24,7 +24,12 @@ class MAPI Application
         bool Run();
         void Stop();
 
-        void GetFramebufferSize(uint32_t* OutWidth, uint32_t* OutHeight) const;
+        void GetFramebufferSize(uint16_t* OutWidth, uint16_t* OutHeight) const;
+        void SetFramebufferSize(const uint16_t inWidth, const uint16_t inHeight);
+
+        bool IsRunning() const;
+        bool IsSuspended() const;
+        void SetSuspended(const bool bValue);
 
     private:
         struct AppState

@@ -9,6 +9,7 @@
 
 bool ApplicationOnEvent(uint16_t Code, void* Sender, void* ListenerInst, EventContext Context);
 bool ApplicationOnKey(uint16_t Code, void* Sender, void* ListenerInst, EventContext Context);
+bool ApplicationOnResized(uint16_t Code, void* Sender, void* ListenerInst, EventContext Context);
 
 bool Application::Create(const ApplicationConfig& Config)
 {
@@ -27,6 +28,7 @@ bool Application::Create(const ApplicationConfig& Config)
     EventSystem::Get()->RegisterEvent(EVENT_CODE_APPLICATION_QUIT, this, ApplicationOnEvent);
     EventSystem::Get()->RegisterEvent(EVENT_CODE_KEY_PRESSED, this, ApplicationOnKey);
     EventSystem::Get()->RegisterEvent(EVENT_CODE_KEY_RELEASED, this, ApplicationOnKey);
+    EventSystem::Get()->RegisterEvent(EVENT_CODE_RESIZED, this, ApplicationOnResized);
 
     size_t LoggerMemoryRequirement = 0;
     Logger::Initialize(&LoggerMemoryRequirement, nullptr);
@@ -121,6 +123,9 @@ bool Application::Run()
     Logger::Shutdown();
 
     EventSystem::Get()->UnregisterEvent(EVENT_CODE_APPLICATION_QUIT, this, ApplicationOnEvent);
+    EventSystem::Get()->UnregisterEvent(EVENT_CODE_KEY_PRESSED, this, ApplicationOnKey);
+    EventSystem::Get()->UnregisterEvent(EVENT_CODE_KEY_RELEASED, this, ApplicationOnKey);
+    EventSystem::Get()->UnregisterEvent(EVENT_CODE_RESIZED, this, ApplicationOnResized);
 
     EventSystem::Shutdown();
 
@@ -132,10 +137,31 @@ void Application::Stop()
     State.bIsRunning = false;
 }
 
-void Application::GetFramebufferSize(uint32_t* OutWidth, uint32_t* OutHeight) const
+void Application::GetFramebufferSize(uint16_t* OutWidth, uint16_t* OutHeight) const
 {
     *OutWidth  = State.Width;
     *OutHeight = State.Height;
+}
+
+void Application::SetFramebufferSize(const uint16_t inWidth, const uint16_t inHeight)
+{
+    State.Width  = inWidth;
+    State.Height = inHeight;
+}
+
+bool Application::IsRunning() const
+{
+    return State.bIsRunning;
+}
+
+bool Application::IsSuspended() const
+{
+    return State.bIsSuspended;
+}
+
+void Application::SetSuspended(const bool bValue)
+{
+    State.bIsSuspended = bValue;
 }
 
 bool ApplicationOnEvent(uint16_t Code, void* Sender, void* ListenerInst, EventContext Context)
@@ -165,5 +191,47 @@ bool ApplicationOnKey(uint16_t Code, void* Sender, void* ListenerInst, EventCont
         }
     }
     
+    return false;
+}
+
+bool ApplicationOnResized(uint16_t Code, void* Sender, void* ListenerInst, EventContext Context)
+{
+    if (Code == EVENT_CODE_RESIZED)
+    {
+        Application* App = static_cast<Application*>(ListenerInst);
+        uint16_t AppWidth;
+        uint16_t AppHeight;
+        App->GetFramebufferSize(&AppWidth, &AppHeight);
+
+        uint16_t Width  = Context.Data.u16[0];
+        uint16_t Height = Context.Data.u16[1];
+
+        if (Width != AppWidth || Height != AppHeight)
+        {
+            App->SetFramebufferSize(Width, Height);
+
+            MlokDebug("Application window resize: %i %i", Width, Height);
+
+            if (Width == 0 || Height == 0)
+            {
+                MlokInfo("Window minimized, suspending application...");
+                App->SetSuspended(true);
+                return true;
+            }
+            else
+            {
+                if (App->IsSuspended())
+                {
+                    MlokInfo("Window restored, resuming application...");
+                    App->SetSuspended(false);
+                }
+                if (Renderer::Get())
+                {
+                    Renderer::Get()->OnResized(Width, Height);
+                }
+            }
+        }
+    }
+
     return false;
 }
