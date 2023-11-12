@@ -24,7 +24,7 @@ void VulkanFence::Create(VulkanContext* inContext, bool bCreateSignaled)
     {
         CreateInfo.setFlags(vk::FenceCreateFlagBits::eSignaled);
     }
-    Handle = Context->pDevice->LogicalDevice.createFence(CreateInfo, Context->Allocator);
+    Handle = Context->pDevice->LogicalDevice.createFence(CreateInfo, Context->Allocator).value;
 }
 
 void VulkanFence::Destroy()

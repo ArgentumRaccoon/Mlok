@@ -34,7 +34,7 @@ void VulkanFramebuffer::Create(VulkanContext* inContext,
               .setHeight(Height)
               .setLayers(1);
 
-    Handle = Context->pDevice->LogicalDevice.createFramebuffer(CreateInfo, Context->Allocator);
+    Handle = Context->pDevice->LogicalDevice.createFramebuffer(CreateInfo, Context->Allocator).value;
 }
 
 void VulkanFramebuffer::Recreate(VulkanContext* inContext,

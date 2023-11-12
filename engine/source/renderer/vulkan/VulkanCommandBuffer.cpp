@@ -46,7 +46,7 @@ void VulkanCommandBuffer::Allocate(VulkanContext* inContext,
                 .setCommandBufferCount(1);
 
     State = VulkanCommandBufferState::eNotAllocated;
-    std::vector<vk::CommandBuffer> AllocatedBuffers = Context->pDevice->LogicalDevice.allocateCommandBuffers(AllocateInfo);
+    std::vector<vk::CommandBuffer> AllocatedBuffers = Context->pDevice->LogicalDevice.allocateCommandBuffers(AllocateInfo).value;
     if (!AllocatedBuffers.empty())
     {
         Handle = AllocatedBuffers[0]; // For now always allocating only one command buffer

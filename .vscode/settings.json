@@ -68,7 +68,14 @@
         "array": "cpp",
         "span": "cpp",
         "functional": "cpp",
-        "*.tcc": "cpp"
+        "*.tcc": "cpp",
+        "chrono": "cpp",
+        "codecvt": "cpp",
+        "forward_list": "cpp",
+        "filesystem": "cpp",
+        "fstream": "cpp",
+        "iomanip": "cpp",
+        "optional": "cpp"
     },
     "workbench.editor.enablePreviewFromCodeNavigation": false
 }

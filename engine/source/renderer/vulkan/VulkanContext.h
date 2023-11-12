@@ -7,6 +7,7 @@
 #include "VulkanRenderPass.h"
 #include "VulkanCommandBuffer.h"
 #include "VulkanFence.h"
+#include "shaders/VulkanObjectShader.h"
 
 #include <memory>
 
@@ -31,6 +32,8 @@ class VulkanContext
 
         std::vector<VulkanFence> InFlightFences;
         std::vector<VulkanFence*> ImagesInFlight;
+
+        std::unique_ptr<VulkanObjectShader> ObjectShader;
 
         uint32_t FramebufferWidth;
         uint32_t FramebufferHeight;

@@ -32,6 +32,7 @@ class VulkanBackend : public RendererBackend
         bool CreateMainRenderPass();
         void CreateCommandBuffers();
         void CreateSyncObjects();
+        bool CreateObjectShader();
 
         bool RecreateSwapchain();
 };

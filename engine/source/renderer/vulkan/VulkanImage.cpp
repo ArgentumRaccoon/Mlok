@@ -52,7 +52,7 @@ void VulkanImage::Create(VulkanContext* inContext,
               .setSamples(vk::SampleCountFlagBits::e1)
               .setSharingMode(vk::SharingMode::eExclusive);
 
-    Handle = Context->pDevice->LogicalDevice.createImage(CreateInfo, Context->Allocator);
+    Handle = Context->pDevice->LogicalDevice.createImage(CreateInfo, Context->Allocator).value;
 
     vk::MemoryRequirements MemoryRequirements;
     MemoryRequirements = Context->pDevice->LogicalDevice.getImageMemoryRequirements(Handle);
@@ -67,7 +67,7 @@ void VulkanImage::Create(VulkanContext* inContext,
     vk::MemoryAllocateInfo MemoryAllocateInfo {};
     MemoryAllocateInfo.setAllocationSize(MemoryRequirements.size)
                       .setMemoryTypeIndex(MemoryType);
-    Memory = Context->pDevice->LogicalDevice.allocateMemory(MemoryAllocateInfo, Context->Allocator);
+    Memory = Context->pDevice->LogicalDevice.allocateMemory(MemoryAllocateInfo, Context->Allocator).value;
     Context->pDevice->LogicalDevice.bindImageMemory(Handle, Memory, 0u);
 
     if (bShouldCreateView)
@@ -92,7 +92,7 @@ void VulkanImage::CreateImageView()
               .setFormat(Format)
               .setSubresourceRange(SubresourceRange);
 
-    View = Context->pDevice->LogicalDevice.createImageView(CreateInfo, Context->Allocator);
+    View = Context->pDevice->LogicalDevice.createImageView(CreateInfo, Context->Allocator).value;
 }
 
 void VulkanImage::Destroy()

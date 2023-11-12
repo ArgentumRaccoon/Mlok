@@ -82,7 +82,7 @@ void VulkanRenderPass::Create(VulkanContext* inContext)
               .setDependencyCount(1)
               .setPDependencies(&SubpassDependency);
 
-    Handle = Context->pDevice->LogicalDevice.createRenderPass(CreateInfo, Context->Allocator);
+    Handle = Context->pDevice->LogicalDevice.createRenderPass(CreateInfo, Context->Allocator).value;
 }
 
 void VulkanRenderPass::Destroy()

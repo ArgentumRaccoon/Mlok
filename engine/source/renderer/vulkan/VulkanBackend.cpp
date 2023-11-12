@@ -113,12 +113,20 @@ bool VulkanBackend::Initialize(const std::string& AppName, const uint32_t Frameb
 
     CreateSyncObjects();
 
+    if (!CreateObjectShader())
+    {
+        return false;
+    }
+
     return true;
 }
 
 void VulkanBackend::Shutdown()
 {
     Context.pDevice->LogicalDevice.waitIdle();
+
+    MlokInfo("Destroying Vulkan Object Shader...");
+    Context.ObjectShader->Destroy();
 
     MlokInfo("Destroying Vulkan Sync Objects...");
     auto DestroySemaphore = [&](vk::Semaphore& SemaphoreToDestroy) {
@@ -416,6 +424,15 @@ void VulkanBackend::CreateSyncObjects()
     }
 
     Context.ImagesInFlight.resize(Context.pSwapchain->GetImageCount(), nullptr);
+}
+
+bool VulkanBackend::CreateObjectShader()
+{
+    MlokInfo("Creating Vulkan Object Shader...");
+    Context.ObjectShader = std::make_unique<VulkanObjectShader>(&Context);
+    MlokInfo("Vulkan Object Shader created.");
+
+    return true;
 }
 
 bool VulkanBackend::RecreateSwapchain()

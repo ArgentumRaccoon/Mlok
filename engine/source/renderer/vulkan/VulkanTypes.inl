@@ -8,6 +8,8 @@
 #define VULKAN_HPP_NO_EXCEPTIONS
 #include <vulkan/vulkan.hpp>
 
+#define OBJECT_SHADER_STAGE_COUNT 2
+
 typedef enum VulkanEventCode
 {
 
