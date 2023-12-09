@@ -14,8 +14,8 @@ VulkanBuffer::VulkanBuffer()
 
 VulkanBuffer::VulkanBuffer(VulkanContext* inContext,
                            size_t inSize,
-                           vk::MemoryPropertyFlagBits inMemoryPropertyFlags,
-                           vk::BufferUsageFlagBits inUsage,
+                           vk::MemoryPropertyFlags inMemoryPropertyFlags,
+                           vk::BufferUsageFlags inUsage,
                            bool bBindOnCreate)
     : Context { inContext }
     , TotalSize { inSize }
@@ -32,8 +32,8 @@ VulkanBuffer::~VulkanBuffer()
 
 bool VulkanBuffer::Create(VulkanContext* inContext,
                           size_t inSize,
-                          vk::MemoryPropertyFlagBits inMemoryPropertyFlags,
-                          vk::BufferUsageFlagBits inUsage,
+                          vk::MemoryPropertyFlags inMemoryPropertyFlags,
+                          vk::BufferUsageFlags inUsage,
                           bool bBindOnCreate)
 {
     if (Context != inContext)

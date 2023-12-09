@@ -2,6 +2,8 @@
 
 #include "renderer/vulkan/VulkanTypes.inl"
 #include "renderer/vulkan/VulkanPipeline.h"
+#include "renderer/vulkan/VulkanBuffer.h"
+#include "renderer/RendererTypes.inl"
 
 #include <array>
 
@@ -45,10 +47,23 @@ class VulkanObjectShader
         void Destroy();
 
         void Use();
+        
+        void UpdateGlobalState();
+
+        GlobalUniformObject& GetGlobalUBO() { return GlobalUBO; };
 
     private:
         VulkanContext* Context; // Cached pointer to backend context
 
         std::array<VulkanShaderStage, OBJECT_SHADER_STAGE_COUNT> Stages;
+
+        vk::DescriptorPool GlobalDescriptorPool;
+        vk::DescriptorSetLayout GlobalDescriptorSetLayout;
+        vk::DescriptorSet GlobalDescriptorSets[3]; // One per each frame rendering
+
+        GlobalUniformObject GlobalUBO;
+
+        VulkanBuffer GlobalUniformBuffer;
+        
         VulkanPipeline Pipeline;
 };

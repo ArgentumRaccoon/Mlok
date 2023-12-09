@@ -2,6 +2,7 @@
 
 #include "renderer/vulkan/VulkanBackend.h"
 #include "core/Logger.h"
+#include "math/MathTypes.h"
 
 Renderer* Renderer::Instance = nullptr;
 
@@ -58,6 +59,8 @@ bool Renderer::DrawFrame(RenderPacket* Packet)
 {
     if (BeginFrame(Packet->DeltaTime))
     {
+        Backend->UpdateGlobalState(Mat4_I(), Mat4_I(), {}, { 1.f, 1.f, 1.f, 1.f }, 0);
+
         bool bResult = EndFrame(Packet->DeltaTime);
 
         if (!bResult)

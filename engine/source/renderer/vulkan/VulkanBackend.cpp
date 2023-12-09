@@ -303,6 +303,20 @@ bool VulkanBackend::EndFrame(float DeltaTime)
     return true;
 }
 
+void VulkanBackend::UpdateGlobalState(Mat4 Projection, Mat4 View, Vec3 ViewPosition, Vec4 AmbientColor, int32_t Mode)
+{
+    VulkanCommandBuffer* CommandBuffer = &Context.GraphicsCommandBuffers[Context.ImageIndex];
+    
+    Context.ObjectShader->Use();
+
+    Context.ObjectShader->GetGlobalUBO().Projection = Projection;
+    Context.ObjectShader->GetGlobalUBO().View = View;
+
+    // Here will be some more UBO properties
+
+    Context.ObjectShader->UpdateGlobalState();
+}
+
 bool VulkanBackend::CreateInstance(const vk::InstanceCreateInfo& CreateInfo)
 {
     Context.pInstance = std::make_unique<vk::Instance>(vk::createInstance(CreateInfo, Context.Allocator).value);

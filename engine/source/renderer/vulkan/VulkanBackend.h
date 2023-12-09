@@ -3,6 +3,7 @@
 #include "renderer/RendererBackend.h"
 #include "VulkanTypes.inl"
 #include "VulkanContext.h"
+#include "math/MathTypes.h"
 
 class VulkanBackend : public RendererBackend
 {
@@ -13,6 +14,8 @@ class VulkanBackend : public RendererBackend
         virtual void OnResized(uint16_t NewWidth, uint16_t NewHeight) override;
         virtual bool BeginFrame(float DeltaTime) override;
         virtual bool EndFrame(float DeltaTime) override;
+
+        virtual void UpdateGlobalState(Mat4 Projection, Mat4 View, Vec3 ViewPosition, Vec4 AmbientColor, int32_t Mode) override;
 
     private:
         VulkanContext Context;

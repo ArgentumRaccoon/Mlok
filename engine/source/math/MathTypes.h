@@ -80,3 +80,15 @@ typedef struct Vertex3D
 {
     Vec3 Position;
 } Vertex3D;
+
+MINLINE Mat4 Mat4_I()
+{
+    const Mat4 Identity {
+        1.f, 0.f, 0.f, 0.f,
+        0.f, 1.f, 0.f, 0.f,
+        0.f, 0.f, 1.f, 0.f,
+        0.f, 0.f, 0.f, 1.f
+    };
+
+    return Identity;
+}

@@ -14,6 +14,8 @@ class RendererBackend
         virtual bool BeginFrame(float DeltaTime) = 0;
         virtual bool EndFrame(float DeltaTime) = 0;
 
+        virtual void UpdateGlobalState(Mat4 Projection, Mat4 View, Vec3 ViewPosition, Vec4 AmbientColor, int32_t Mode) = 0;
+
     protected:
         uint64_t FrameCount;
 };

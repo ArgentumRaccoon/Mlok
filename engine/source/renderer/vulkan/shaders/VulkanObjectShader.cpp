@@ -112,6 +112,44 @@ bool VulkanObjectShader::Create(VulkanContext* inContext)
         }
     }
 
+    vk::DescriptorSetLayoutBinding GlobalUBOLayoutBinding {};
+    GlobalUBOLayoutBinding.setBinding(0)
+                          .setDescriptorCount(1)
+                          .setDescriptorType(vk::DescriptorType::eUniformBuffer)
+                          .setImmutableSamplers({})
+                          .setStageFlags(vk::ShaderStageFlagBits::eVertex);
+
+    vk::DescriptorSetLayoutCreateInfo GlobalLayoutInfo {};
+    GlobalLayoutInfo.setBindingCount(1)
+                    .setPBindings(&GlobalUBOLayoutBinding);
+    {
+        auto Result = Context->pDevice->LogicalDevice.createDescriptorSetLayout(GlobalLayoutInfo, Context->Allocator);
+        if (!VulkanUtils::ResultIsSuccess(Result.result))
+        {
+            MlokError("Error creating Global Descriptor Layout: %s", VulkanUtils::VulkanResultString(Result.result, true).c_str());
+            return false;
+        }
+        GlobalDescriptorSetLayout = Result.value;
+    }
+
+    vk::DescriptorPoolSize GlobalPoolSize {};
+    GlobalPoolSize.setType(vk::DescriptorType::eUniformBuffer)
+                  .setDescriptorCount(Context->pSwapchain->GetImageCount());
+
+    vk::DescriptorPoolCreateInfo GlobalPoolInfo {};
+    GlobalPoolInfo.setPoolSizeCount(1)
+                  .setPPoolSizes(&GlobalPoolSize)
+                  .setMaxSets(Context->pSwapchain->GetImageCount());
+    {
+        auto Result = Context->pDevice->LogicalDevice.createDescriptorPool(GlobalPoolInfo, Context->Allocator);
+        if (!VulkanUtils::ResultIsSuccess(Result.result))
+        {
+            MlokError("Error creating Global Descriptor Pool: %s", VulkanUtils::VulkanResultString(Result.result, true).c_str());
+            return false;
+        }
+        GlobalDescriptorPool = Result.value;
+    }
+
     vk::Viewport Viewport;
     Viewport.setX(0.f)
             .setY(static_cast<float>(Context->FramebufferHeight))
@@ -142,6 +180,8 @@ bool VulkanObjectShader::Create(VulkanContext* inContext)
         Offset += Sizes[i];
     }
 
+    std::vector<vk::DescriptorSetLayout> DescriptorSetLayouts = { GlobalDescriptorSetLayout };
+
     std::vector<vk::PipelineShaderStageCreateInfo> StageCreateInfos(OBJECT_SHADER_STAGE_COUNT);
     for (size_t i = 0; i < OBJECT_SHADER_STAGE_COUNT; ++i)
     {
@@ -149,7 +189,6 @@ bool VulkanObjectShader::Create(VulkanContext* inContext)
     }
 
     const bool bIsWireframe = false;
-    std::vector<vk::DescriptorSetLayout> DescriptorSetLayouts(AttributeCount);
     if (!Pipeline.Create(Context,
                          Context->pMainRenderPass.get(),
                          AttributeDescriptions,
@@ -163,12 +202,47 @@ bool VulkanObjectShader::Create(VulkanContext* inContext)
         return false;
     }
 
+    if (!GlobalUniformBuffer.Create(Context, 
+                                    sizeof(GlobalUniformObject),
+                                    vk::MemoryPropertyFlagBits::eDeviceLocal | vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+                                    vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eUniformBuffer,
+                                    true))
+    {
+        MlokError("Global Uniform Buffer creation failed for object shader");
+        return false;
+    }
+
+    std::vector<vk::DescriptorSetLayout> GlobalLayouts { 3, GlobalDescriptorSetLayout };
+
+    vk::DescriptorSetAllocateInfo DesciptorSetAllocateInfo {};
+    DesciptorSetAllocateInfo.setDescriptorPool(GlobalDescriptorPool)
+                            .setSetLayouts(GlobalLayouts);
+
+    {
+        auto Result = Context->pDevice->LogicalDevice.allocateDescriptorSets(DesciptorSetAllocateInfo);
+        if (!VulkanUtils::ResultIsSuccess(Result.result))
+        {
+            MlokError("Error allocating Global DescriptorSets for object shader: %s", VulkanUtils::VulkanResultString(Result.result, true).c_str());
+            return false;
+        }
+        for (size_t i = 0; i < Result.value.size(); ++i)
+        {
+            GlobalDescriptorSets[i] = Result.value[i];
+        }
+    }
+
     return true;
 }
 
 void VulkanObjectShader::Destroy()
 {
+    GlobalUniformBuffer.Destroy();
+
     Pipeline.Destroy();
+
+    Context->pDevice->LogicalDevice.destroyDescriptorPool(GlobalDescriptorPool, Context->Allocator);
+
+    Context->pDevice->LogicalDevice.destroyDescriptorSetLayout(GlobalDescriptorSetLayout, Context->Allocator);
 
     for (auto& Stage : Stages)
     {
@@ -180,4 +254,33 @@ void VulkanObjectShader::Use()
 {
     uint32_t ImageIndex = Context->ImageIndex;
     Pipeline.Bind(&Context->GraphicsCommandBuffers[ImageIndex], vk::PipelineBindPoint::eGraphics);
+}
+
+void VulkanObjectShader::UpdateGlobalState()
+{
+    auto ImageIndex = Context->ImageIndex;
+    auto CommandBuffer = Context->GraphicsCommandBuffers[ImageIndex].Get();
+    auto GlobalDescriptor = GlobalDescriptorSets[ImageIndex];
+
+    CommandBuffer->bindDescriptorSets(vk::PipelineBindPoint::eGraphics, Pipeline.GetLayout(), 0, 1, &GlobalDescriptor, 0, nullptr);
+
+    const uint32_t Range = static_cast<uint32_t>(sizeof(GlobalUniformObject));
+    const uint64_t Offset = 0;
+    
+    GlobalUniformBuffer.LoadData(Offset, Range, {}, &GlobalUBO);
+
+    vk::DescriptorBufferInfo BufferInfo {};
+    BufferInfo.setBuffer(*GlobalUniformBuffer.Get())
+              .setOffset(Offset)
+              .setRange(Range);
+
+    vk::WriteDescriptorSet DescriptorSetWrite {};
+    DescriptorSetWrite.setDstSet(GlobalDescriptor)
+                      .setDstBinding(0)
+                      .setDstArrayElement(0)
+                      .setDescriptorType(vk::DescriptorType::eUniformBuffer)
+                      .setDescriptorCount(1)
+                      .setPBufferInfo(&BufferInfo);
+
+    Context->pDevice->LogicalDevice.updateDescriptorSets(1, &DescriptorSetWrite, 0, nullptr);
 }

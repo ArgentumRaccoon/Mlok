@@ -22,6 +22,10 @@ class VulkanPipeline
         VulkanPipeline& operator=(const VulkanPipeline& Other) = delete;
         ~VulkanPipeline();
 
+        vk::Pipeline* Get() { return &Handle; }
+
+        vk::PipelineLayout GetLayout() { return Layout; }
+
         bool Create(VulkanContext* inContext,
                     VulkanRenderPass* RenderPass,
                     std::vector<vk::VertexInputAttributeDescription>& Attributes,
@@ -33,8 +37,6 @@ class VulkanPipeline
         void Destroy();
 
         void Bind(VulkanCommandBuffer* CommandBuffer, vk::PipelineBindPoint BindPoint);
-
-        vk::Pipeline* Get() { return &Handle; }
 
     private:
         VulkanContext* Context; // Cached pointer to backend context

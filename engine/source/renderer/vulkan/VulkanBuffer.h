@@ -10,8 +10,8 @@ class VulkanBuffer
         VulkanBuffer();
         VulkanBuffer(VulkanContext* Context,
                      size_t Size,
-                     vk::MemoryPropertyFlagBits MemoryPropertyFlags,
-                     vk::BufferUsageFlagBits Usage,
+                     vk::MemoryPropertyFlags MemoryPropertyFlags,
+                     vk::BufferUsageFlags Usage,
                      bool bBindOnCreate);
         ~VulkanBuffer();
 
@@ -19,8 +19,8 @@ class VulkanBuffer
 
         bool Create(VulkanContext* Context,
                     size_t Size,
-                    vk::MemoryPropertyFlagBits MemoryPropertyFlags,
-                    vk::BufferUsageFlagBits Usage,
+                    vk::MemoryPropertyFlags MemoryPropertyFlags,
+                    vk::BufferUsageFlags Usage,
                     bool bBindOnCreate);
         void Destroy();
 
@@ -47,9 +47,9 @@ class VulkanBuffer
 
         vk::Buffer Handle;
         size_t TotalSize;
-        vk::BufferUsageFlagBits Usage;
+        vk::BufferUsageFlags Usage;
         bool bIsLocked;
         vk::DeviceMemory Memory;
         int32_t MemoryIndex;
-        vk::MemoryPropertyFlagBits MemoryPropertyFlags;
+        vk::MemoryPropertyFlags MemoryPropertyFlags;
 };
